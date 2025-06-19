@@ -17,7 +17,7 @@
         "symfony/console": "^7.0",
         "doctrine/orm": "^3.0",
         "doctrine/doctrine-bundle": "^2.14 || ^3.0",
-        "typesense/typesense-php": "^4.1"
+       "typesense/typesense-php": "^4.1 || ^5.1"
     },
     "autoload": {
         "psr-4": {
