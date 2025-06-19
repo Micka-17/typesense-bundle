@@ -3,93 +3,36 @@
 
 namespace Micka17\TypesenseBundle\EventListener;
 
-use Micka17\TypesenseBundle\Attribute\TypesenseIndexable;
-use Micka17\TypesenseBundle\Service\TypesenseManager; // On utilisera le Manager, c'est plus propre
-use Doctrine\ORM\Event\PostPersistEventArgs;
-use Doctrine\ORM\Event\PostUpdateEventArgs;
-use Doctrine\ORM\Event\PreRemoveEventArgs;
-use ReflectionClass;
+use Micka17\TypesenseBundle\Service\TypesenseManager;
+use Micka17\TypesenseBundle\Service\TypesenseNormalizer; // <-- Importer le normalizer
+use Doctrine\Persistence\Event\LifecycleEventArgs;
+// ...
 
 class AutoUpdateListener
 {
-    // Le constructeur ne change pas
     public function __construct(
         private readonly bool $isEnabled,
         private readonly array $indexedEntities,
-        private readonly TypesenseManager $typesenseManager
+        private readonly TypesenseManager $typesenseManager,
+        private readonly TypesenseNormalizer $normalizer // <-- Injecter le normalizer
     ) {}
 
-    // Une méthode pour chaque événement que l'on va déclarer dans services.yaml
-    public function postPersist(PostPersistEventArgs $args): void
-    {
-        $this->handleUpdate($args);
-    }
+    // ... les autres méthodes (postUpdate, preRemove...) ne changent pas ...
 
-    public function postUpdate(PostUpdateEventArgs $args): void
+    private function handleUpdate(LifecycleEventArgs $args): void
     {
-        $this->handleUpdate($args);
-    }
-
-    public function preRemove(PreRemoveEventArgs $args): void
-    {
-        if (!$this->isEnabled) {
-            return;
-        }
-
+        // ... la première partie de la méthode ne change pas ...
         $entity = $args->getObject();
-        $entityClass = get_class($entity);
-
-        if (!in_array($entityClass, $this->indexedEntities) || !method_exists($entity, 'getId')) {
+        // ... gestion des proxys ...
+        if (!in_array($entityClass, $this->indexedEntities)) {
             return;
         }
 
-        $reflectionClass = new ReflectionClass($entity);
-        $attribute = ($reflectionClass->getAttributes(TypesenseIndexable::class)[0] ?? null)?->newInstance();
+        // On utilise maintenant notre service pour faire le travail
+        $document = $this->normalizer->normalize($entity); // <-- APPEL AU NORMALIZER
 
-        if ($attribute) {
-            $this->typesenseManager->deleteDocument($attribute->collection, (string)$entity->getId());
-        }
-    }
-
-    // Logique mutualisée pour la création et la mise à jour
-    private function handleUpdate(PostPersistEventArgs|PostUpdateEventArgs $args): void
-    {
-        if (!$this->isEnabled) {
-            return;
-        }
-
-        $entity = $args->getObject();
-        if (!in_array(get_class($entity), $this->indexedEntities)) {
-            return;
-        }
-
-        $document = $this->normalize($entity);
         if ($document) {
             $this->typesenseManager->createOrUpdateDocument($document['collection'], $document['data']);
         }
-    }
-
-    // La méthode de normalisation ne change pas
-    private function normalize(object $entity): ?array
-    {
-        $reflectionClass = new ReflectionClass($entity);
-        $attributeInstance = ($reflectionClass->getAttributes(TypesenseIndexable::class)[0] ?? null)?->newInstance();
-
-        if (!$attributeInstance || !method_exists($entity, 'getId')) {
-            return null;
-        }
-
-        $data = ['id' => (string)$entity->getId()];
-        foreach ($attributeInstance->fields as $field) {
-            $getter = 'get' . ucfirst($field);
-            if (method_exists($entity, $getter)) {
-                $data[$field] = $entity->{$getter}();
-            }
-        }
-
-        return [
-            'collection' => $attributeInstance->collection,
-            'data' => $data,
-        ];
     }
 }

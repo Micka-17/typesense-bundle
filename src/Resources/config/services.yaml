@@ -4,26 +4,25 @@ services:
     autoconfigure: true
     public: false
 
-  # Le service TypesenseClient ne change pas
+  # ... Les déclarations pour TypesenseClient et TypesenseManager ne changent pas ...
   Micka17\TypesenseBundle\Service\TypesenseClient:
-    public: true
-    arguments:
-      $apiKey: '%env(TYPESENSE_API_KEY)%'
-      $host: '%env(TYPESENSE_HOST)%'
-      $port: '%env(TYPESENSE_PORT)%'
-      $protocol: '%env(TYPESENSE_PROTOCOL)%'
-
-  # Le service TypesenseManager est maintenant nécessaire pour le listener
+    #...
   Micka17\TypesenseBundle\Service\TypesenseManager:
     public: true
 
-  # NOUVELLE DÉCLARATION en tant que LISTENER
+  # On déclare notre nouveau service
+  Micka17\TypesenseBundle\Service\TypesenseNormalizer:
+    # On injecte le service Doctrine pour qu'il puisse lire les métadonnées
+    arguments:
+        $doctrine: '@doctrine'
+
+  # On met à jour le listener pour qu'il utilise notre nouveau normalizer
   Micka17\TypesenseBundle\EventListener\AutoUpdateListener:
     arguments:
       $isEnabled: '%typesense.auto_update.enabled%'
       $indexedEntities: '%typesense.indexable_entities%'
-
-    # Au lieu d'un seul tag, on en met un pour chaque événement écouté
+      $typesenseManager: '@Micka17\TypesenseBundle\Service\TypesenseManager'
+      $typesenseNormalizer: '@Micka17\TypesenseBundle\Service\TypesenseNormalizer'
     tags:
       - { name: 'doctrine.event_listener', event: 'postPersist', method: 'postPersist' }
       - { name: 'doctrine.event_listener', event: 'postUpdate', method: 'postUpdate' }
