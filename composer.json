@@ -1,5 +1,5 @@
 {
-    "name": "micka-17/typesense-bundle",
+    "name": "micka17/typesense-bundle",
     "description": "Un bundle Symfony pour intégrer Typesense.",
     "type": "symfony-bundle",
     "license": "MIT",
