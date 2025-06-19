@@ -9,8 +9,6 @@ services:
     Micka17\TypesenseBundle\Service\TypesenseClient:
         public: true # Essentiel pour que le projet puisse l'utiliser !
         arguments:
-            # On dit à Symfony quelles valeurs passer au constructeur.
-            # On utilise les variables d'environnement du projet.
             $apiKey: '%env(TYPESENSE_API_KEY)%'
             $host: '%env(TYPESENSE_HOST)%'
             $port: '%env(TYPESENSE_PORT)%'
@@ -26,8 +24,8 @@ services:
 
     # Subscriber pour la mise à jour automatique des entités
     Micka17\TypesenseBundle\EventSubscriber\AutoUpdateSubscriber:
+        arguments:
+            $isEnabled: '%typesense.auto_update.enabled%'
+            $indexedEntities: '%typesense.indexable_entities%'
         tags:
             - { name: 'doctrine.event_subscriber' }
-        arguments:
-            - '%typesense.auto_update.enabled%'
-            - '%typesense.indexable_entities%'
