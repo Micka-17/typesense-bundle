@@ -1,7 +1,7 @@
 <?php
 // src/TypesenseBundle/Service/TypesenseManager.php
 
-namespace Micka_17\TypesenseBundle\Service;
+namespace Micka17\TypesenseBundle\Service;
 
 use Typesense\Client;
 use Typesense\Exceptions\ObjectNotFound;

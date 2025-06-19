@@ -1,9 +1,9 @@
 <?php
 // src/TypesenseBundle/Service/TypesenseSearchService.php
 
-namespace Micka_17\TypesenseBundle\Service;
+namespace Micka17\TypesenseBundle\Service;
 
-use Micka_17\TypesenseBundle\Dto\Result;
+use Micka17\TypesenseBundle\Dto\Result;
 use Typesense\Client;
 
 class TypesenseSearchService

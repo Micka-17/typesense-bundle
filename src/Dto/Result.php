@@ -1,7 +1,7 @@
 <?php
 // src/TypesenseBundle/Dto/Result.php
 
-namespace Micka_17\TypesenseBundle\Dto;
+namespace Micka17\TypesenseBundle\Dto;
 
 use JsonSerializable;
 

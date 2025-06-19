@@ -1,9 +1,9 @@
 <?php
 // src/TypesenseBundle/Command/ReindexCommand.php
 
-namespace Micka_17\TypesenseBundle\Command;
+namespace Micka17\TypesenseBundle\Command;
 
-use Micka_17\TypesenseBundle\Service\TypesenseManager;
+use Micka17\TypesenseBundle\Service\TypesenseManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

@@ -1,7 +1,7 @@
 <?php
 // src/TypesenseBundle/DependencyInjection/Configuration.php
 
-namespace Micka_17\TypesenseBundle\DependencyInjection;
+namespace Micka17\TypesenseBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;

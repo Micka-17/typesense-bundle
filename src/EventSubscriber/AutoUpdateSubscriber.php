@@ -1,10 +1,10 @@
 <?php
 // src/TypesenseBundle/EventSubscriber/AutoUpdateSubscriber.php
 
-namespace Micka_17\TypesenseBundle\EventSubscriber;
+namespace Micka17\TypesenseBundle\EventSubscriber;
 
-use Micka_17\TypesenseBundle\Attribute\TypesenseIndexable;
-use Micka_17\TypesenseBundle\Service\TypesenseManager;
+use Micka17\TypesenseBundle\Attribute\TypesenseIndexable;
+use Micka17\TypesenseBundle\Service\TypesenseManager;
 use Doctrine\Bundle\DoctrineBundle\EventSubscriber\EventSubscriberInterface;
 use Doctrine\ORM\Events;
 use Doctrine\Persistence\Event\LifecycleEventArgs;

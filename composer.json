@@ -21,7 +21,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Micka-17\\TypesenseBundle\\": "src/"
+            "Micka17\\TypesenseBundle\\": "src/"
         }
     }
 }

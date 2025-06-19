@@ -1,7 +1,7 @@
 <?php
 // src/TypesenseBundle/Service/TypesenseClient.php
 
-namespace Micka_17\TypesenseBundle\Service;
+namespace Micka17\TypesenseBundle\Service;
 
 use Typesense\Client;
 

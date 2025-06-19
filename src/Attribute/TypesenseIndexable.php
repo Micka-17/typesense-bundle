@@ -1,7 +1,7 @@
 <?php
 // src/TypesenseBundle/Attribute/TypesenseIndexable.php
 
-namespace Micka_17\TypesenseBundle\Attribute;
+namespace Micka17\TypesenseBundle\Attribute;
 
 use Attribute;
 

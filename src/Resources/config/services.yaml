@@ -12,15 +12,15 @@ services:
                 nodes: '%typesense.nodes%'
         
     # Service public pour la gestion des collections et documents
-    Micka_17\TypesenseBundle\Service\TypesenseManager:
+    Micka17\TypesenseBundle\Service\TypesenseManager:
         public: true
 
     # Service public pour la recherche
-    Micka_17\TypesenseBundle\Service\TypesenseSearchService:
+    Micka17\TypesenseBundle\Service\TypesenseSearchService:
         public: true
 
     # Subscriber pour la mise à jour automatique des entités
-    Micka_17\TypesenseBundle\EventSubscriber\AutoUpdateSubscriber:
+    Micka17\TypesenseBundle\EventSubscriber\AutoUpdateSubscriber:
         tags:
             - { name: 'doctrine.event_subscriber' }
         arguments:

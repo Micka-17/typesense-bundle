@@ -1,7 +1,7 @@
 <?php
 // src/TypesenseBundle/DependencyInjection/TypesenseExtension.php
 
-namespace Micka_17\TypesenseBundle\DependencyInjection;
+namespace Micka17\TypesenseBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

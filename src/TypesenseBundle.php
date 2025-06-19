@@ -1,7 +1,7 @@
 <?php
 // src/TypesenseBundle/TypesenseBundle.php
 
-namespace Micka_17\TypesenseBundle;
+namespace Micka17\TypesenseBundle;
 
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 

@@ -1,7 +1,7 @@
 <?php
 // src/TypesenseBundle/Helper/SchemaBuilder.php
 
-namespace Micka_17\TypesenseBundle\Helper;
+namespace Micka17\TypesenseBundle\Helper;
 
 class SchemaBuilder
 {
