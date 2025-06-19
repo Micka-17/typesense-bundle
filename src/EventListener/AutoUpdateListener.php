@@ -14,7 +14,7 @@ class AutoUpdateListener
         private readonly bool $isEnabled,
         private readonly array $indexedEntities,
         private readonly TypesenseManager $typesenseManager,
-        private readonly TypesenseNormalizer $normalizer
+        private readonly TypesenseNormalizer $typesenseNormalizer
     ) {}
 
     public function postPersist(LifecycleEventArgs $args): void
@@ -69,7 +69,7 @@ class AutoUpdateListener
             return;
         }
 
-        $document = $this->normalizer->normalize($entity);
+        $document = $this->typesenseNormalizer->normalize($entity);
 
         if ($document) {
             $this->typesenseManager->createOrUpdateDocument($document['collection'], $document['data']);
