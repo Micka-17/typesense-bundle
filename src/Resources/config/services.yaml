@@ -1,28 +1,34 @@
+# Fichier : micka-17/typesense-bundle/src/Resources/config/services.yaml
 services:
   _defaults:
     autowire: true
     autoconfigure: true
     public: false
 
-  # ... Les déclarations pour TypesenseClient et TypesenseManager ne changent pas ...
+  # 1. Définition du Client : C'est ici que l'erreur se produit.
+  # On doit lui fournir ses arguments.
   Micka17\TypesenseBundle\Service\TypesenseClient:
-    #...
-  Micka17\TypesenseBundle\Service\TypesenseManager:
     public: true
-
-  # On déclare notre nouveau service
-  Micka17\TypesenseBundle\Service\TypesenseNormalizer:
-    # On injecte le service Doctrine pour qu'il puisse lire les métadonnées
     arguments:
-        $doctrine: '@doctrine'
+      $apiKey: '%env(TYPESENSE_API_KEY)%'
+      $host: '%env(TYPESENSE_HOST)%'
+      $port: '%env(TYPESENSE_PORT)%'
+      $protocol: '%env(TYPESENSE_PROTOCOL)%'
 
-  # On met à jour le listener pour qu'il utilise notre nouveau normalizer
+  # 2. Définition du Manager
+  Micka17\TypesenseBundle\Service\TypesenseManager:
+    public: true # Dépend du TypesenseClient, qui sera autowiré
+
+  # 3. Définition du Normalizer
+  Micka17\TypesenseBundle\Service\TypesenseNormalizer:
+    arguments:
+      $doctrine: '@doctrine'
+
+  # 4. Définition du Listener
   Micka17\TypesenseBundle\EventListener\AutoUpdateListener:
     arguments:
       $isEnabled: '%typesense.auto_update.enabled%'
       $indexedEntities: '%typesense.indexable_entities%'
-      $typesenseManager: '@Micka17\TypesenseBundle\Service\TypesenseManager'
-      $typesenseNormalizer: '@Micka17\TypesenseBundle\Service\TypesenseNormalizer'
     tags:
       - { name: 'doctrine.event_listener', event: 'postPersist', method: 'postPersist' }
       - { name: 'doctrine.event_listener', event: 'postUpdate', method: 'postUpdate' }
