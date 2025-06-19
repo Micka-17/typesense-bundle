@@ -1,0 +1,28 @@
+# src/TypesenseBundle/Resources/config/services.yaml
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # Client de base Typesense (privé, utilisé par les autres services)
+    Typesense\Client:
+        arguments:
+            -   api_key: '%typesense.api_key%'
+                nodes: '%typesense.nodes%'
+        
+    # Service public pour la gestion des collections et documents
+    Micka_17\TypesenseBundle\Service\TypesenseManager:
+        public: true
+
+    # Service public pour la recherche
+    Micka_17\TypesenseBundle\Service\TypesenseSearchService:
+        public: true
+
+    # Subscriber pour la mise à jour automatique des entités
+    Micka_17\TypesenseBundle\EventSubscriber\AutoUpdateSubscriber:
+        tags:
+            - { name: 'doctrine.event_subscriber' }
+        arguments:
+            - '%typesense.auto_update.enabled%'
+            - '%typesense.indexable_entities%'
