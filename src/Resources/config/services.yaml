@@ -1,31 +1,29 @@
-# src/TypesenseBundle/Resources/config/services.yaml
+# L'indentation est CRUCIALE en YAML. Utilisez 2 espaces, pas de tabulations.
 services:
-    _defaults:
-        autowire: true
-        autoconfigure: true
-        public: false
+  # Ce niveau est indenté de 2 espaces
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
 
-    # Client de base Typesense (privé, utilisé par les autres services)
-    Micka17\TypesenseBundle\Service\TypesenseClient:
-        public: true # Essentiel pour que le projet puisse l'utiliser !
-        arguments:
-            $apiKey: '%env(TYPESENSE_API_KEY)%'
-            $host: '%env(TYPESENSE_HOST)%'
-            $port: '%env(TYPESENSE_PORT)%'
-            $protocol: '%env(TYPESENSE_PROTOCOL)%'
-        
-    # Service public pour la gestion des collections et documents
-    Micka17\TypesenseBundle\Service\TypesenseManager:
-        public: true
+  # Ce service est au même niveau que _defaults (2 espaces)
+  Micka17\TypesenseBundle\Service\TypesenseClient:
+    # Les options de ce service sont indentées de 4 espaces
+    public: true
+    arguments:
+      $apiKey: '%env(TYPESENSE_API_KEY)%'
+      $host: '%env(TYPESENSE_HOST)%'
+      $port: '%env(TYPESENSE_PORT)%'
+      $protocol: '%env(TYPESENSE_PROTOCOL)%'
 
-    # Service public pour la recherche
-    Micka17\TypesenseBundle\Service\TypesenseSearchService:
-        public: true
+  # Ce service est aussi au même niveau que _defaults (2 espaces)
+  Micka17\TypesenseBundle\EventSubscriber\AutoUpdateSubscriber:
+    # Les options de ce service sont indentées de 4 espaces
+    arguments:
+      $isEnabled: '%typesense.auto_update.enabled%'
+      $indexedEntities: '%typesense.indexable_entities%'
 
-    # Subscriber pour la mise à jour automatique des entités
-    Micka17\TypesenseBundle\EventSubscriber\AutoUpdateSubscriber:
-        arguments:
-            $isEnabled: '%typesense.auto_update.enabled%'
-            $indexedEntities: '%typesense.indexable_entities%'
-        tags:
-            - { name: 'doctrine.event_subscriber' }
+    # Le tag est indenté de 4 espaces
+    tags:
+      # L'élément de la liste est indenté de 6 espaces
+      - { name: 'doctrine.event_subscriber' }
