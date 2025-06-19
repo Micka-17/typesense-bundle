@@ -1,12 +1,12 @@
 <?php
-// Fichier : micka-17/typesense-bundle/src/EventListener/AutoUpdateListener.php
 
 namespace Micka17\TypesenseBundle\EventListener;
 
 use Micka17\TypesenseBundle\Service\TypesenseManager;
-use Micka17\TypesenseBundle\Service\TypesenseNormalizer; // <-- Importer le normalizer
+use Micka17\TypesenseBundle\Service\TypesenseNormalizer;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
-// ...
+use Doctrine\Persistence\Proxy;
+use ReflectionClass;
 
 class AutoUpdateListener
 {
@@ -14,22 +14,62 @@ class AutoUpdateListener
         private readonly bool $isEnabled,
         private readonly array $indexedEntities,
         private readonly TypesenseManager $typesenseManager,
-        private readonly TypesenseNormalizer $normalizer // <-- Injecter le normalizer
+        private readonly TypesenseNormalizer $normalizer
     ) {}
 
-    // ... les autres méthodes (postUpdate, preRemove...) ne changent pas ...
+    public function postPersist(LifecycleEventArgs $args): void
+    {
+        $this->handleUpdate($args);
+    }
+
+    public function postUpdate(LifecycleEventArgs $args): void
+    {
+        $this->handleUpdate($args);
+    }
+
+    public function preRemove(LifecycleEventArgs $args): void
+    {
+        if (!$this->isEnabled) {
+            return;
+        }
+
+        $entity = $args->getObject();
+        $entityClass = get_class($entity);
+
+        if ($entity instanceof Proxy) {
+            $entityClass = get_parent_class($entity);
+        }
+
+        if (!in_array($entityClass, $this->indexedEntities) || !method_exists($entity, 'getId')) {
+            return;
+        }
+
+        $reflectionClass = new ReflectionClass($entityClass);
+        $attribute = ($reflectionClass->getAttributes(TypesenseIndexable::class)[0] ?? null)?->newInstance();
+
+        if ($attribute) {
+            $this->typesenseManager->deleteDocument($attribute->collection, (string)$entity->getId());
+        }
+    }
 
     private function handleUpdate(LifecycleEventArgs $args): void
     {
-        // ... la première partie de la méthode ne change pas ...
+        if (!$this->isEnabled) {
+            return;
+        }
+
         $entity = $args->getObject();
-        // ... gestion des proxys ...
+        $entityClass = get_class($entity);
+
+        if ($entity instanceof Proxy) {
+            $entityClass = get_parent_class($entity);
+        }
+
         if (!in_array($entityClass, $this->indexedEntities)) {
             return;
         }
 
-        // On utilise maintenant notre service pour faire le travail
-        $document = $this->normalizer->normalize($entity); // <-- APPEL AU NORMALIZER
+        $document = $this->normalizer->normalize($entity);
 
         if ($document) {
             $this->typesenseManager->createOrUpdateDocument($document['collection'], $document['data']);
