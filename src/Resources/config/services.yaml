@@ -26,4 +26,4 @@ services:
     # Le tag est indenté de 4 espaces
     tags:
       # L'élément de la liste est indenté de 6 espaces
-      - { name: 'doctrine.event_subscriber' }
+      - { name: 'doctrine.event_subscriber', events: [postPersist, postUpdate, preRemove] }
