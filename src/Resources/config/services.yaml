@@ -15,6 +15,12 @@ services:
       $port: '%env(TYPESENSE_PORT)%'
       $protocol: '%env(TYPESENSE_PROTOCOL)%'
 
+  Micka17\TypesenseBundle\Service\SchemaGenerator: ~
+
+  Micka17\TypesenseBundle\Command\TypesenseManageCommand:
+    # Les commandes doivent être publiques
+    public: true
+
   # 2. Définition du Manager
   Micka17\TypesenseBundle\Service\TypesenseManager:
     public: true # Dépend du TypesenseClient, qui sera autowiré
