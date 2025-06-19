@@ -5,7 +5,9 @@ namespace Micka17\TypesenseBundle\EventListener;
 
 use Micka17\TypesenseBundle\Attribute\TypesenseIndexable;
 use Micka17\TypesenseBundle\Service\TypesenseManager; // On utilisera le Manager, c'est plus propre
-use Doctrine\ORM\Event\LifecycleEventArgs;
+use Doctrine\ORM\Event\PostPersistEventArgs;
+use Doctrine\ORM\Event\PostUpdateEventArgs;
+use Doctrine\ORM\Event\PreRemoveEventArgs;
 use ReflectionClass;
 
 class AutoUpdateListener
@@ -18,17 +20,17 @@ class AutoUpdateListener
     ) {}
 
     // Une méthode pour chaque événement que l'on va déclarer dans services.yaml
-    public function postPersist(LifecycleEventArgs $args): void
+    public function postPersist(PostPersistEventArgs $args): void
     {
         $this->handleUpdate($args);
     }
 
-    public function postUpdate(LifecycleEventArgs $args): void
+    public function postUpdate(PostUpdateEventArgs $args): void
     {
         $this->handleUpdate($args);
     }
 
-    public function preRemove(LifecycleEventArgs $args): void
+    public function preRemove(PreRemoveEventArgs $args): void
     {
         if (!$this->isEnabled) {
             return;
@@ -50,7 +52,7 @@ class AutoUpdateListener
     }
 
     // Logique mutualisée pour la création et la mise à jour
-    private function handleUpdate(LifecycleEventArgs $args): void
+    private function handleUpdate(PostPersistEventArgs|PostUpdateEventArgs $args): void
     {
         if (!$this->isEnabled) {
             return;
