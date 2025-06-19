@@ -5,7 +5,7 @@ namespace Micka17\TypesenseBundle\EventListener;
 
 use Micka17\TypesenseBundle\Attribute\TypesenseIndexable;
 use Micka17\TypesenseBundle\Service\TypesenseManager; // On utilisera le Manager, c'est plus propre
-use Doctrine\Persistence\Event\LifecycleEventArgs;
+use Doctrine\ORM\Event\LifecycleEventArgs;
 use ReflectionClass;
 
 class AutoUpdateListener
