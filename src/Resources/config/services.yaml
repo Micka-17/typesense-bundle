@@ -20,9 +20,7 @@ services:
     public: true # Dépend du TypesenseClient, qui sera autowiré
 
   # 3. Définition du Normalizer
-  Micka17\TypesenseBundle\Service\TypesenseNormalizer:
-    arguments:
-      $doctrine: '@doctrine'
+  Micka17\TypesenseBundle\Service\TypesenseNormalizer: ~
 
   # 4. Définition du Listener
   Micka17\TypesenseBundle\EventListener\AutoUpdateListener:
