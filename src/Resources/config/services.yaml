@@ -1,14 +1,11 @@
-# L'indentation est CRUCIALE en YAML. Utilisez 2 espaces, pas de tabulations.
 services:
-  # Ce niveau est indenté de 2 espaces
   _defaults:
     autowire: true
     autoconfigure: true
     public: false
 
-  # Ce service est au même niveau que _defaults (2 espaces)
+  # Le service TypesenseClient ne change pas
   Micka17\TypesenseBundle\Service\TypesenseClient:
-    # Les options de ce service sont indentées de 4 espaces
     public: true
     arguments:
       $apiKey: '%env(TYPESENSE_API_KEY)%'
@@ -16,14 +13,18 @@ services:
       $port: '%env(TYPESENSE_PORT)%'
       $protocol: '%env(TYPESENSE_PROTOCOL)%'
 
-  # Ce service est aussi au même niveau que _defaults (2 espaces)
-  Micka17\TypesenseBundle\EventSubscriber\AutoUpdateSubscriber:
-    # Les options de ce service sont indentées de 4 espaces
+  # Le service TypesenseManager est maintenant nécessaire pour le listener
+  Micka17\TypesenseBundle\Service\TypesenseManager:
+    public: true
+
+  # NOUVELLE DÉCLARATION en tant que LISTENER
+  Micka17\TypesenseBundle\EventListener\AutoUpdateListener:
     arguments:
       $isEnabled: '%typesense.auto_update.enabled%'
       $indexedEntities: '%typesense.indexable_entities%'
 
-    # Le tag est indenté de 4 espaces
+    # Au lieu d'un seul tag, on en met un pour chaque événement écouté
     tags:
-      # L'élément de la liste est indenté de 6 espaces
-      - { name: 'doctrine.event_subscriber', events: [postPersist, postUpdate, preRemove] }
+      - { name: 'doctrine.event_listener', event: 'postPersist', method: 'postPersist' }
+      - { name: 'doctrine.event_listener', event: 'postUpdate', method: 'postUpdate' }
+      - { name: 'doctrine.event_listener', event: 'preRemove', method: 'preRemove' }
