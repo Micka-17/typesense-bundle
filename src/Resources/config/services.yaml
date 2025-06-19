@@ -6,10 +6,15 @@ services:
         public: false
 
     # Client de base Typesense (privé, utilisé par les autres services)
-    Typesense\Client:
+    Micka17\TypesenseBundle\Service\TypesenseClient:
+        public: true # Essentiel pour que le projet puisse l'utiliser !
         arguments:
-            -   api_key: '%typesense.api_key%'
-                nodes: '%typesense.nodes%'
+            # On dit à Symfony quelles valeurs passer au constructeur.
+            # On utilise les variables d'environnement du projet.
+            $apiKey: '%env(TYPESENSE_API_KEY)%'
+            $host: '%env(TYPESENSE_HOST)%'
+            $port: '%env(TYPESENSE_PORT)%'
+            $protocol: '%env(TYPESENSE_PROTOCOL)%'
         
     # Service public pour la gestion des collections et documents
     Micka17\TypesenseBundle\Service\TypesenseManager:
