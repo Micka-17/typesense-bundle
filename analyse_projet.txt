@@ -33,20 +33,6 @@ Améliorations et fonctionnalités futures :
 - **Facettes et pagination :** Fournir des outils ou des services d'assistance pour simplifier la mise en œuvre de la recherche à facettes et de la pagination.
 - **Tests fonctionnels :** Ajouter des tests fonctionnels pour s'assurer que le bundle fonctionne correctement dans une application Symfony complète.
 
-## Comparaison avec le bundle ACSEO
-
-| Fonctionnalité | Votre Bundle | Bundle ACSEO |
-| :--- | :---: | :---: |
-| **Indexation automatique** | Oui | Oui |
-| **Commandes CLI** | Oui | Oui |
-| **Recherche** | Oui | Oui |
-| **Finder Service** | Oui | Oui |
-| **Recherche Multi-Collection** | Oui | Non |
-| **Gestion des synonymes** | Oui | Partielle |
-| **Paginator** | Oui | Oui |
-| **Collection & Document Locators** | Non | Oui |
-| **Configuration avancée** | Partielle | Oui |
-
 ## Fonctionnalités à ajouter
 
 Pour que votre bundle soit au même niveau que celui d'ACSEO, voici les fonctionnalités que vous devriez ajouter :
