@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configure Indexable Entities{% endblock %}
+
+{% block body %}
+<div class="container my-4">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h3 class="mb-0">Configure Indexable Entities</h3>
+        </div>
+        <div class="card-body">
+            <p class="mb-4">
+                Configure which entities should be indexed in Typesense. 
+                This will allow you to search across your entities using Typesense's powerful search capabilities.
+            </p>
+            
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No entities are currently configured for indexing. Add entities to enable search functionality.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

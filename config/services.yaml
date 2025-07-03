@@ -1,0 +1,67 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Micka17\TypesenseBundle\Controller\Admin\:
+    resource: '../src/Controller/Admin'
+    tags: ['controller.service_arguments']
+
+  Micka17\TypesenseBundle\Service\TypesenseClient:
+    public: true
+    arguments:
+      $apiKey: '%env(TYPESENSE_API_KEY)%'
+      $nodes: '%typesense.cluster.nodes%'
+      $readPreference: '%typesense.cluster.read_preference%'
+      $consistencyLevel: '%typesense.cluster.consistency_level%'
+      $clusterEnabled: '%typesense.cluster.enabled%'
+
+  Micka17\TypesenseBundle\Service\SchemaGenerator: ~
+
+  Micka17\TypesenseBundle\Command\TypesenseCreateCollectionCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseSynonymsCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseSynonymsApplyCommand:
+    public: true
+    arguments:
+      $indexableEntities: '%typesense.indexable_entities%'
+      $globalSynonyms: '%typesense.synonyms%'
+
+  Micka17\TypesenseBundle\Service\TypesenseErrorTracker:
+    arguments:
+      $logger: '@logger'
+      $kernel: '@kernel'
+      $enabled: '%typesense.error_tracking.enabled%'
+      $logLevel: '%typesense.error_tracking.log_level%'
+      $trackNodeErrors: '%typesense.error_tracking.track_node_errors%'
+      $nodeErrorFields: '%typesense.error_tracking.node_error_fields%'
+
+  Micka17\TypesenseBundle\Service\TypesenseManager:
+    public: true
+    arguments:
+      $client: '@Micka17\TypesenseBundle\Service\TypesenseClient'
+      $em: '@doctrine.orm.entity_manager'
+      $schemaGenerator: '@Micka17\TypesenseBundle\Service\SchemaGenerator'
+      $normalizer: '@Micka17\TypesenseBundle\Service\TypesenseNormalizer'
+      $errorTracker: '@Micka17\TypesenseBundle\Service\TypesenseErrorTracker'
+
+  Micka17\TypesenseBundle\Service\TypesenseNormalizer: ~
+
+  Micka17\TypesenseBundle\Command\TypesenseManageCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Service\FinderService:
+    public: true
+
+  Micka17\TypesenseBundle\EventListener\AutoUpdateListener:
+    arguments:
+      $isEnabled: '%typesense.auto_update.enabled%'
+      $indexedEntities: '%typesense.indexable_entities%'
+    tags:
+      - { name: 'doctrine.event_listener', event: 'postPersist', method: 'postPersist' }
+      - { name: 'doctrine.event_listener', event: 'postUpdate', method: 'postUpdate' }
+      - { name: 'doctrine.event_listener', event: 'preRemove', method: 'preRemove' }

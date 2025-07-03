@@ -1,0 +1,58 @@
+Analyse du projet : micka-17/typesense-bundle
+
+Ce projet est un bundle Symfony conçu pour intégrer le moteur de recherche Typesense dans une application Symfony.
+
+Fonctionnalités principales :
+- Intégration transparente avec Symfony 7 et PHP 8.4+.
+- Liaison forte avec Doctrine ORM pour l'indexation des entités.
+- Mise à jour automatique des index Typesense lors de la création, mise à jour ou suppression d'entités Doctrine (configurable via `auto_update`).
+- Prise en charge des configurations Typesense simples (nœud unique) et en cluster.
+- Services publics pour une interaction facile avec Typesense (`TypesenseClient`, `FinderService`).
+- Commandes CLI pour la gestion des index (par exemple, réindexation) et des synonymes.
+- Système de suivi des erreurs et de journalisation.
+- Gestion déclarative des synonymes via la configuration et les attributs.
+- Système de pagination pour les résultats de recherche.
+
+Configuration :
+La configuration principale se fait via un fichier YAML (par exemple, `config/packages/typesense.yaml`). Les paramètres clés incluent :
+- `api_key`: Votre clé API Typesense (obligatoire).
+- `indexable_entities`: La liste des classes d'entités Doctrine à indexer.
+- `cluster`: La configuration de votre cluster de nœuds Typesense.
+- `synonyms`: La liste des synonymes globaux.
+
+Utilisation :
+1.  Configurez le bundle avec votre clé API et vos entités.
+2.  Utilisez les attributs (`#[TypesenseIndexable]`, `#[TypesenseField]`, `#[TypesenseSynonym]`) sur vos entités Doctrine pour définir comment elles doivent être indexées.
+3.  Injectez le service `Micka17\TypesenseBundle\Service\FinderService` dans vos propres services pour effectuer des recherches.
+4.  Utilisez les commandes fournies pour gérer vos collections et synonymes Typesense.
+
+Améliorations et fonctionnalités futures :
+- **Indexation asynchrone :** Pour les applications avec un grand volume d'écritures, l'indexation pourrait être déléguée à un composant de messagerie (Symfony Messenger) pour éviter de ralentir les réponses HTTP.
+- **Intégration avec le profileur Symfony :** Ajouter un collecteur de données pour le profileur Symfony afin de déboguer et d'optimiser les requêtes Typesense.
+- **Recherche fédérée :** Permettre la recherche sur plusieurs collections en une seule requête.
+- **Facettes et pagination :** Fournir des outils ou des services d'assistance pour simplifier la mise en œuvre de la recherche à facettes et de la pagination.
+- **Tests fonctionnels :** Ajouter des tests fonctionnels pour s'assurer que le bundle fonctionne correctement dans une application Symfony complète.
+
+## Comparaison avec le bundle ACSEO
+
+| Fonctionnalité | Votre Bundle | Bundle ACSEO |
+| :--- | :---: | :---: |
+| **Indexation automatique** | Oui | Oui |
+| **Commandes CLI** | Oui | Oui |
+| **Recherche** | Oui | Oui |
+| **Finder Service** | Oui | Oui |
+| **Recherche Multi-Collection** | Oui | Non |
+| **Gestion des synonymes** | Oui | Partielle |
+| **Paginator** | Oui | Oui |
+| **Collection & Document Locators** | Non | Oui |
+| **Configuration avancée** | Partielle | Oui |
+
+## Fonctionnalités à ajouter
+
+Pour que votre bundle soit au même niveau que celui d'ACSEO, voici les fonctionnalités que vous devriez ajouter :
+
+1.  **Collection & Document Locators :** Mettez en place des "locators" pour trouver dynamiquement les collections et les documents à indexer, plutôt que de se baser uniquement sur la configuration.
+2.  **Configuration avancée :**
+    *   **`collection_prefix` :** Permettre de préfixer les noms de collection.
+    *   **`number_of_shards` :** Configurer le nombre de "shards" pour les collections.
+    *   **`default_sorting_field` :** Définir un champ de tri par défaut.

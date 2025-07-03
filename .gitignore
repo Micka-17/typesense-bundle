@@ -1,0 +1,63 @@
+# Dependencies
+/vendor/
+/composer.lock
+
+# Tests
+/tests/_output/
+/tests/_generated/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build
+/build/
+/dist/
+
+# Environment
+.env.local
+.env.local.php
+.env.*.local
+
+# Logs
+/var/log/
+/var/cache/
+
+# PHP
+*.log
+*.phpunit.result.cache
+phpunit.xml
+node_modules
+package-lock.json
+
+# Symfony
+/config/packages/dev/*.yaml
+
+# Windows
+Thumbs.db
+.DS_Store
+
+# Coverage
+coverage.xml
+html-coverage/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+~*
+
+# Backup files
+*.orig
+*.rej
+
+# Configuration
+config/parameters.yml
+config/parameters_test.yml
+
+# Composer
+composer.phar
+
+analyse_projet.txt

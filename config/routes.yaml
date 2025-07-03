@@ -1,0 +1,8 @@
+micka17_typesense_admin:
+    resource: '../src/Controller/Admin/'
+    type: attribute
+    prefix: /admin/typesense
+
+typesense_bundle_assets:
+    resource: '@TypesenseBundle/public/build/'
+    prefix: /typesense-bundle/build
