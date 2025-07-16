@@ -6,9 +6,15 @@ use Doctrine\Common\Collections\Collection;
 use Micka17\TypesenseBundle\Attribute\TypesenseField;
 use Micka17\TypesenseBundle\Attribute\TypesenseIndexable;
 use ReflectionClass;
+use InvalidArgumentException;
+use Micka17\TypesenseBundle\Service\LlmService;
 
 class TypesenseNormalizer
 {
+    public function __construct(
+        private LlmService $llmService
+    ) {}
+    
     public function normalize(object $entity): ?array
     {
         $reflectionClass = new ReflectionClass($entity);
@@ -18,30 +24,44 @@ class TypesenseNormalizer
 
         $documentData = [];
 
-        if ($indexableAttribute->normalizerMethod && method_exists($entity, $indexableAttribute->normalizerMethod)) {
-            $methodName = $indexableAttribute->normalizerMethod;
-            $documentData = $entity->{$methodName}();
-            if (!is_array($documentData)) {
-                throw new \LogicException("La méthode '$methodName' de l'entité " . $entity::class . " doit retourner un tableau.");
+        foreach ($reflectionClass->getProperties() as $property) {
+            $fieldAttribute = ($property->getAttributes(TypesenseField::class)[0] ?? null)?->newInstance();
+            if (!$fieldAttribute) { continue; }
+
+            $fieldName = $fieldAttribute->name ?? $property->getName();
+            $property->setAccessible(true);
+            $value = $property->getValue($entity);
+
+            $documentData[$fieldName] = $this->formatSimpleValue($value, $fieldAttribute);
+        }
+
+        $nestedFieldConfigs = $this->groupNestedFields($indexableAttribute->nestedFields);
+
+        foreach ($nestedFieldConfigs as $baseProperty => $configs) {
+            if (!property_exists($entity, $baseProperty)) continue;
+            
+            $basePropertyRef = $reflectionClass->getProperty($baseProperty);
+            $basePropertyRef->setAccessible(true);
+            $collection = $basePropertyRef->getValue($entity);
+
+            if ($collection instanceof Collection) {
+                $documentData[$baseProperty] = $collection->map(fn($item) => $this->normalizeNestedItem($item, $configs))->toArray();
+            }
+        }
+
+        if ($this->llmService->isEnabled() && !empty($indexableAttribute->embeddingFields)) {
+            $textParts = [];
+            foreach ($indexableAttribute->embeddingFields as $fieldName) {
+                if (isset($documentData[$fieldName]) && is_scalar($documentData[$fieldName])) {
+                    $textParts[] = $documentData[$fieldName];
+                }
             }
 
-        } else {
-            $nestedConfigMap = [];
-            foreach ($indexableAttribute->nestedFields as $config) {
-                list($sourceProperty, $targetKey) = explode('.', $config['name'], 2);
-                $nestedConfigMap[$sourceProperty][$targetKey] = $config['method'] ?? null;
-            }
+            $textToEmbed = implode('. ', $textParts);
 
-            foreach ($reflectionClass->getProperties() as $property) {
-                $fieldAttribute = ($property->getAttributes(TypesenseField::class)[0] ?? null)?->newInstance();
-                if (!$fieldAttribute) { continue; }
-
-                $fieldName = $fieldAttribute->name ?? $property->getName();
-                $property->setAccessible(true);
-                $value = $property->getValue($entity);
-
-                $nestedConfig = $nestedConfigMap[$fieldName] ?? null;
-                $documentData[$fieldName] = $this->formatValue($value, $fieldAttribute, $nestedConfig);
+            if (!empty($textToEmbed)) {
+                $vector = $this->llmService->generateEmbeddings($textToEmbed);
+                $documentData['embedding_vector'] = $vector;
             }
         }
         
@@ -57,60 +77,35 @@ class TypesenseNormalizer
         ];
     }
 
-    private function formatValue(mixed $value, TypesenseField $attribute, ?array $nestedConfig): mixed
+    private function groupNestedFields(array $nestedFields): array
     {
-        if ($value === null) return null;
-        
-        if ($value instanceof Collection) {
-            return $value->map(fn($item) => $this->normalizeNestedObject($item, $nestedConfig))->toArray();
-        }
+        $grouped = [];
+        foreach ($nestedFields as $field) {
+            if (!isset($field['name']) || !str_contains($field['name'], '.')) continue;
 
-        if ($value instanceof \DateTimeInterface) return $value->getTimestamp();
-        
-        if (is_object($value)) {
-            if ($attribute->type === 'string' && method_exists($value, 'getId')) {
-                return (string) $value->getId();
-            }
-            return $this->normalizeSimpleObject($value);
+            list($baseProperty, $subKey) = explode('.', $field['name'], 2);
+            $grouped[$baseProperty][] = [
+                'target_key' => $subKey,
+                'method' => $field['method'] ?? null,
+            ];
         }
-
-        return $value;
+        return $grouped;
     }
-
-    private function normalizeNestedObject(object $item, ?array $config): ?array
+    
+    private function normalizeNestedItem(object $item, array $configs): array
     {
-        if ($config === null) {
-            return $this->normalizeSimpleObject($item);
-        }
-
         $data = [];
-        
-        if (method_exists($item, 'getId')) {
-            $data['id'] = (string) $item->getId();
-        }
+        foreach ($configs as $config) {
+            $key = $config['target_key'];
+            $methodChain = $config['method'];
 
-        foreach ($config as $key => $methodChain) {
             if ($methodChain) {
                 $data[$key] = $this->callChainedMethods($item, $methodChain);
             } else {
                 $fallbackMethod = 'get' . ucfirst($key);
-                if (method_exists($item, $fallbackMethod)) {
-                    $data[$key] = $item->{$fallbackMethod}();
-                } else {
-                    $data[$key] = null;
-                }
+                $data[$key] = method_exists($item, $fallbackMethod) ? $item->{$fallbackMethod}() : null;
             }
         }
-
-        return $data;
-    }
-
-    
-    private function normalizeSimpleObject(object $object): ?array
-    {
-        if (!method_exists($object, 'getId')) return null;
-        $data = ['id' => (string) $object->getId()];
-        if (method_exists($object, 'getName')) $data['name'] = $object->getName();
         return $data;
     }
 
@@ -122,10 +117,24 @@ class TypesenseNormalizer
             $method = str_replace('()', '', $method);
             if ($result === null) return null;
             if (!method_exists($result, $method)) {
-                throw new \InvalidArgumentException("La méthode '$method' n'existe pas sur la classe '" . get_class($result) . "'.");
+                throw new InvalidArgumentException("La méthode '$method' n'existe pas sur la classe '" . get_class($result) . "'.");
             }
             $result = $result->{$method}();
         }
         return $result;
+    }
+
+    private function formatSimpleValue(mixed $value, TypesenseField $attribute): mixed
+    {
+        if ($value === null) return null;
+        if ($value instanceof \DateTimeInterface) return $value->getTimestamp();
+        
+        if (is_object($value) && !$value instanceof Collection) {
+            if ($attribute->type === 'string' && method_exists($value, 'getId')) {
+                return (string) $value->getId();
+            }
+        }
+
+        return $value;
     }
 }

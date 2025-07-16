@@ -4,10 +4,12 @@ namespace Micka17\TypesenseBundle\Service\LlmProvider;
 
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Component\PropertyAccess\PropertyAccess;
-use Symfony\Component\Cache\CacheItemPoolInterface;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Micka17\TypesenseBundle\Exception\LlmException;
+use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
+use Symfony\Component\HttpClient\RetryableHttpClient;
 
 class GenericLlmProvider implements LlmProviderInterface
 {
@@ -15,7 +17,7 @@ class GenericLlmProvider implements LlmProviderInterface
     private array $config;
     private CacheItemPoolInterface $cache;
     private LoggerInterface $logger;
-    private PropertyAccess $propertyAccess;
+    private PropertyAccessorInterface $propertyAccess;
 
     public function __construct(
         array $config,
@@ -27,15 +29,20 @@ class GenericLlmProvider implements LlmProviderInterface
         $this->logger = $logger;
         $this->propertyAccess = PropertyAccess::createPropertyAccessor();
 
-        $this->client = HttpClient::create([
+        $baseClient = HttpClient::create([
             'headers' => [
-                'Authorization' => 'Bearer ' . $this->config['api_key'],
+                'Authorization' => 'Bearer ' . ($this->config['api_key'] ?? null),
                 'Content-Type' => 'application/json',
             ],
             'timeout' => $this->config['timeout'] ?? 30,
-            'retry_failed' => true,
-            'max_retries' => $this->config['max_retries'] ?? 3,
         ]);
+
+        $this->client = new RetryableHttpClient(
+            $baseClient,
+            null,
+            $this->config['max_retries'] ?? 3,
+            $this->logger
+        );
     }
 
     public function generateEmbeddings(string $text): array
@@ -69,7 +76,7 @@ class GenericLlmProvider implements LlmProviderInterface
     private function buildPayload(string $text): array
     {
         $payload = $this->config['payload'];
-        $payload['input'] = str_replace('{{text}}', $text, $payload['input']);
+        $payload['prompt'] = str_replace('{{text}}', $text, $payload['prompt']);
         return $payload;
     }
 

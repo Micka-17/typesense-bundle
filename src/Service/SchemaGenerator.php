@@ -45,6 +45,18 @@ class SchemaGenerator
 
         $finalFields = array_merge($typesenseFields, $indexableAttribute->nestedFields);
 
+        if (!empty($indexableAttribute->embeddingFields)) {
+            if ($indexableAttribute->embeddingDim === null) {
+                throw new \InvalidArgumentException("Le paramètre 'embeddingDim' est requis dans #[TypesenseIndexable] quand 'embeddingFields' est utilisé.");
+            }
+
+            $finalFields[] = [
+                'name' => 'embedding_vector',
+                'type' => 'float[]',
+                'num_dim' => $indexableAttribute->embeddingDim,
+            ];
+        }
+
         $schema = [
             'name' => $indexableAttribute->collection,
             'fields' => $finalFields,

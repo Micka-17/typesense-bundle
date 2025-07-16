@@ -10,6 +10,8 @@ class TypesenseIndexable
         public ?string $normalizerMethod = null,
         public ?string $defaultSortingField = null,
         public bool $enableNestedFields = false,
-        public array $nestedFields = []
+        public array $nestedFields = [],
+        public array $embeddingFields = [],
+        public ?int $embeddingDim = null
     ) {}
 }

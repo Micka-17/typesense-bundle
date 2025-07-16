@@ -49,7 +49,9 @@ services:
       $normalizer: '@Micka17\TypesenseBundle\Service\TypesenseNormalizer'
       $errorTracker: '@Micka17\TypesenseBundle\Service\TypesenseErrorTracker'
 
-  Micka17\TypesenseBundle\Service\TypesenseNormalizer: ~
+  Micka17\TypesenseBundle\Service\TypesenseNormalizer: 
+    arguments:
+      $llmService: '@Micka17\TypesenseBundle\Service\LlmService'
 
   Micka17\TypesenseBundle\Command\TypesenseManageCommand:
     public: true

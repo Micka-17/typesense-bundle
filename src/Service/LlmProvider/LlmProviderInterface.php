@@ -2,7 +2,7 @@
 
 namespace Micka17\TypesenseBundle\Service\LlmProvider;
 
-use Symfony\Component\Cache\CacheItemPoolInterface;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 
 interface LlmProviderInterface
