@@ -45,6 +45,8 @@ class TypesenseExtension extends Extension
 
         $container->setParameter('typesense.synonyms', $config['synonyms']);
 
+        $container->setParameter('typesense.llm.config', $config['llm']);
+
         $this->addTwigNamespace($container);
     }
 

@@ -95,6 +95,31 @@ class Configuration implements ConfigurationInterface
                     ->end()
                 ->end()
 
+                ->arrayNode('llm')
+                    ->addDefaultsIfNotSet()
+                    ->canBeEnabled()
+                    ->children()
+                        ->scalarNode('api_key')->defaultNull()->end()
+                        ->scalarNode('model')->defaultNull()->end()
+                        ->scalarNode('endpoint')
+                            ->info("L'URL complète de l'API à appeler, ex: 'https://api.openai.com/v1/embeddings'")
+                            ->isRequired()
+                        ->end()
+                        ->arrayNode('payload')
+                            ->info("Structure du JSON à envoyer. Utilisez {{text}} comme placeholder.")
+                            ->isRequired()
+                            ->children()
+                                ->scalarNode('input')->defaultValue('{{text}}')->end()
+                                ->scalarNode('model')->defaultValue('%llm.model%')->end()
+                            ->end()
+                        ->end()
+                        ->scalarNode('response_path')
+                            ->info("Chemin pour trouver l'embedding dans la réponse JSON, ex: 'data[0].embedding'")
+                            ->defaultValue('data[0].embedding')
+                        ->end()
+                    ->end()
+                ->end()
+
             ->end();
 
         return $treeBuilder;

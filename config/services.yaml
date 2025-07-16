@@ -57,6 +57,18 @@ services:
   Micka17\TypesenseBundle\Service\FinderService:
     public: true
 
+  Micka17\TypesenseBundle\Service\LlmProvider\GenericLlmProvider:
+    arguments:
+      $config: '%typesense.llm.config%'
+      $cache: '@cache.app'
+      $logger: '@logger'
+
+  Micka17\TypesenseBundle\Service\LlmService:
+    public: true
+    arguments:
+      $enabled: '%typesense.llm.enabled%'
+      $provider: '@Micka17\TypesenseBundle\Service\LlmProvider\GenericLlmProvider'
+
   Micka17\TypesenseBundle\EventListener\AutoUpdateListener:
     arguments:
       $isEnabled: '%typesense.auto_update.enabled%'
