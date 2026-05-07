@@ -36,6 +36,30 @@ class ConfigurationTest extends TestCase
         $this->assertSame('leader_only', $result['cluster']['read_preference']);
     }
 
+    public function testIndexableEntitiesListFormat(): void
+    {
+        $result = $this->processConfiguration([
+            'api_key' => 'key',
+            'cluster' => ['nodes' => [['host' => 'localhost']]],
+            'indexable_entities' => ['App\Entity\Cocktail', 'App\Entity\Ingredient'],
+        ]);
+
+        $this->assertSame(['App\Entity\Cocktail', 'App\Entity\Ingredient'], $result['indexable_entities']);
+    }
+
+    public function testIndexableEntitiesHashFormatNormalized(): void
+    {
+        $result = $this->processConfiguration([
+            'api_key' => 'key',
+            'cluster' => ['nodes' => [['host' => 'localhost']]],
+            'indexable_entities' => ['App\Entity\Cocktail' => null, 'App\Entity\Ingredient' => null],
+        ]);
+
+        // Hash format {ClassName: ~} is normalized to list so in_array() works in AutoUpdateListener
+        $this->assertContains('App\Entity\Cocktail', $result['indexable_entities']);
+        $this->assertContains('App\Entity\Ingredient', $result['indexable_entities']);
+    }
+
     public function testAutoUpdateBoolTrueBackwardCompat(): void
     {
         $result = $this->processConfiguration([

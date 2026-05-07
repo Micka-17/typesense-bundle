@@ -46,8 +46,8 @@ typesense:
             - { host: '%env(TYPESENSE_HOST)%', port: 8108, protocol: http }
 
     indexable_entities:
-        App\Entity\Product: ~
-        App\Entity\Category: ~
+        - App\Entity\Product
+        - App\Entity\Category
 
     auto_update: true   # or: {enabled: true, mode: sync|async}
 ```
@@ -127,8 +127,8 @@ typesense:
 
     # --- Entities to index ---
     indexable_entities:
-        App\Entity\Product: ~
-        App\Entity\Category: ~
+        - App\Entity\Product
+        - App\Entity\Category
 
     # --- Auto-index on Doctrine events ---
     auto_update: true

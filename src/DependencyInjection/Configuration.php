@@ -63,6 +63,19 @@ class Configuration implements ConfigurationInterface
                 ->end()
 
                 ->arrayNode('indexable_entities')
+                    ->beforeNormalization()
+                        ->always(static function (mixed $v): array {
+                            if (!is_array($v)) {
+                                return [];
+                            }
+                            // Support both list format (- App\Entity\Foo) and hash format (App\Entity\Foo: ~)
+                            $result = [];
+                            foreach ($v as $k => $val) {
+                                $result[] = is_int($k) ? (string) $val : (string) $k;
+                            }
+                            return $result;
+                        })
+                    ->end()
                     ->scalarPrototype()->end()
                 ->end()
 
