@@ -16,7 +16,27 @@ class Configuration implements ConfigurationInterface
         $rootNode
             ->children()
                 ->scalarNode('api_key')->isRequired()->end()
-                ->booleanNode('auto_update')->defaultTrue()->end()
+                ->arrayNode('auto_update')
+                    ->beforeNormalization()
+                        ->always(static function (mixed $v): array {
+                            if (is_bool($v)) {
+                                return ['enabled' => $v, 'mode' => 'sync'];
+                            }
+                            return is_array($v) ? $v : ['enabled' => true, 'mode' => 'sync'];
+                        })
+                    ->end()
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultTrue()->end()
+                        ->scalarNode('mode')
+                            ->defaultValue('sync')
+                            ->validate()
+                                ->ifNotInArray(['sync', 'async'])
+                                ->thenInvalid('auto_update.mode must be "sync" or "async"')
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
 
                 ->arrayNode('error_tracking')
                     ->addDefaultsIfNotSet()

@@ -49,6 +49,17 @@ class TypesenseClient
     }
 
     /**
+     * Update a collection schema via PATCH (add/drop fields).
+     * Each entry is either a field definition or ['name' => '...', 'drop' => true].
+     * @param array<int, array<string, mixed>> $fields
+     * @return array<string, mixed>
+     */
+    public function updateCollection(string $collectionName, array $fields): array
+    {
+        return $this->client->collections[$collectionName]->update(['fields' => $fields]);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function deleteCollection(string $collectionName): array
@@ -452,6 +463,35 @@ class TypesenseClient
     public function deleteConversationModel(string $id): array
     {
         return $this->client->conversations->getModels()[$id]->delete();
+    }
+
+    // API Keys
+
+    /**
+     * @param array<string, mixed> $config  e.g. ['description' => '...', 'actions' => [...], 'collections' => [...]]
+     * @return array<string, mixed>  Contains 'value' key — only returned at creation time.
+     */
+    public function createKey(array $config): array
+    {
+        return $this->client->keys->create($config);
+    }
+
+    /** @return array<string, mixed> */
+    public function listKeys(): array
+    {
+        return $this->client->keys->retrieve();
+    }
+
+    /** @return array<string, mixed> */
+    public function retrieveKey(int $id): array
+    {
+        return $this->client->keys[(string) $id]->retrieve();
+    }
+
+    /** @return array<string, mixed> */
+    public function deleteKey(int $id): array
+    {
+        return $this->client->keys[(string) $id]->delete();
     }
 
     // Aliases

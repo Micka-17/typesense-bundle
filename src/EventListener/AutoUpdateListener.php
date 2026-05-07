@@ -3,8 +3,7 @@
 namespace Micka17\TypesenseBundle\EventListener;
 
 use Micka17\TypesenseBundle\Attribute\TypesenseIndexable;
-use Micka17\TypesenseBundle\Service\TypesenseManager;
-use Micka17\TypesenseBundle\Service\TypesenseNormalizer;
+use Micka17\TypesenseBundle\Service\TypesenseDispatcher;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
 use Doctrine\Persistence\Proxy;
 use ReflectionClass;
@@ -17,8 +16,7 @@ class AutoUpdateListener
     public function __construct(
         private readonly bool $isEnabled,
         private readonly array $indexedEntities,
-        private readonly TypesenseManager $typesenseManager,
-        private readonly TypesenseNormalizer $typesenseNormalizer
+        private readonly TypesenseDispatcher $dispatcher,
     ) {}
 
     /**
@@ -61,7 +59,7 @@ class AutoUpdateListener
         $attribute = ($reflectionClass->getAttributes(TypesenseIndexable::class)[0] ?? null)?->newInstance();
 
         if ($attribute) {
-            $this->typesenseManager->deleteDocument($attribute->collection, (string)$entity->getId());
+            $this->dispatcher->dispatchDelete($attribute->collection, (string) $entity->getId());
         }
     }
 
@@ -85,10 +83,6 @@ class AutoUpdateListener
             return;
         }
 
-        $document = $this->typesenseNormalizer->normalize($entity);
-
-        if ($document) {
-            $this->typesenseManager->createOrUpdateDocument($document['collection'], $document['document']);
-        }
+        $this->dispatcher->dispatchIndex($entity);
     }
 }

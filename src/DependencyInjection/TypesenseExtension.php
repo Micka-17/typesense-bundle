@@ -35,7 +35,8 @@ class TypesenseExtension extends Extension
             ]);
         }
 
-        $container->setParameter('typesense.auto_update.enabled', $config['auto_update']);
+        $container->setParameter('typesense.auto_update.enabled', $config['auto_update']['enabled']);
+        $container->setParameter('typesense.auto_update.async', $config['auto_update']['mode'] === 'async');
         $container->setParameter('typesense.indexable_entities', $config['indexable_entities']);
         
         $container->setParameter('typesense.error_tracking.enabled', $config['error_tracking']['enabled']);

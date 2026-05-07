@@ -7,6 +7,8 @@ use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Typesense\Alias;
 use Typesense\Aliases;
+use Typesense\Key;
+use Typesense\Keys;
 use Typesense\Client;
 use Typesense\Collection;
 use Typesense\Collections;
@@ -28,6 +30,30 @@ class TypesenseClientTest extends TestCase
         $this->mockClient->collections = $this->mockCollections;
 
         $this->typesenseClient = new TestableTypesenseClient($this->mockClient);
+    }
+
+    public function testUpdateCollection(): void
+    {
+        $fields = [
+            ['name' => 'new_field', 'type' => 'string'],
+            ['name' => 'old_field', 'drop' => true],
+        ];
+        $expected = ['name' => 'books', 'fields' => $fields];
+
+        $collectionMock = $this->createMock(Collection::class);
+        $collectionMock->expects($this->once())
+            ->method('update')
+            ->with(['fields' => $fields])
+            ->willReturn($expected);
+
+        $this->mockCollections
+            ->expects($this->once())
+            ->method('offsetGet')
+            ->with('books')
+            ->willReturn($collectionMock);
+
+        $result = $this->typesenseClient->updateCollection('books', $fields);
+        $this->assertEquals($expected, $result);
     }
 
     public function testCreateCollectionSuccess(): void
@@ -260,6 +286,58 @@ class TypesenseClientTest extends TestCase
 
         $result = $this->typesenseClient->deleteDocument($collectionName, $documentId);
         $this->assertEquals($expectedResult, $result);
+    }
+
+    public function testCreateKey(): void
+    {
+        $config   = ['description' => 'Search only', 'actions' => ['documents:search'], 'collections' => ['products']];
+        $expected = ['id' => 1, 'value' => 'secretkey'];
+
+        $mockKeys = $this->createMock(Keys::class);
+        $mockKeys->expects($this->once())->method('create')->with($config)->willReturn($expected);
+        $this->mockClient->keys = $mockKeys;
+
+        $result = $this->typesenseClient->createKey($config);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testListKeys(): void
+    {
+        $expected = ['keys' => [['id' => 1]]];
+
+        $mockKeys = $this->createMock(Keys::class);
+        $mockKeys->expects($this->once())->method('retrieve')->willReturn($expected);
+        $this->mockClient->keys = $mockKeys;
+
+        $this->assertEquals($expected, $this->typesenseClient->listKeys());
+    }
+
+    public function testRetrieveKey(): void
+    {
+        $expected = ['id' => 42, 'description' => 'Read only'];
+
+        $mockKey = $this->createMock(Key::class);
+        $mockKey->expects($this->once())->method('retrieve')->willReturn($expected);
+
+        $mockKeys = $this->createMock(Keys::class);
+        $mockKeys->expects($this->once())->method('offsetGet')->with('42')->willReturn($mockKey);
+        $this->mockClient->keys = $mockKeys;
+
+        $this->assertEquals($expected, $this->typesenseClient->retrieveKey(42));
+    }
+
+    public function testDeleteKey(): void
+    {
+        $expected = ['id' => 42];
+
+        $mockKey = $this->createMock(Key::class);
+        $mockKey->expects($this->once())->method('delete')->willReturn($expected);
+
+        $mockKeys = $this->createMock(Keys::class);
+        $mockKeys->expects($this->once())->method('offsetGet')->with('42')->willReturn($mockKey);
+        $this->mockClient->keys = $mockKeys;
+
+        $this->assertEquals($expected, $this->typesenseClient->deleteKey(42));
     }
 
     public function testUpdateConfig(): void

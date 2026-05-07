@@ -162,6 +162,55 @@
             </div>
         </div>
 
+    {# --- API Keys --- #}
+    {% elseif resource == 'keys' %}
+        <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-shield-exclamation"></i>
+            <span>Les valeurs des clés ne sont <strong>jamais affichées</strong> ici. Utilisez <code>micka17:typesense:keys:create</code> pour créer une clé et noter sa valeur immédiatement.</span>
+        </div>
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr><th>ID</th><th>Description</th><th>Actions</th><th>Collections</th><th>Expiration</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td><code class="text-primary">{{ item.id }}</code></td>
+                            <td>{{ item.description ?? '—' }}</td>
+                            <td>
+                                {% for action in item.actions ?? [] %}
+                                    <span class="badge bg-light text-dark border me-1 small">{{ action }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for col in item.collections ?? [] %}
+                                    <span class="badge bg-info text-dark me-1 small">{{ col }}</span>
+                                {% endfor %}
+                            </td>
+                            <td class="text-muted small">
+                                {% if item.expires_at is defined and item.expires_at > 0 %}
+                                    {{ item.expires_at|date('d/m/Y H:i') }}
+                                {% else %}
+                                    jamais
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <form action="{{ path('micka17_typesense_admin_resource_delete', {resource: resource, id: item[idKey]}) }}"
+                                      method="post" class="d-inline"
+                                      onsubmit="return confirm('Supprimer la clé API #{{ item[idKey]|e('js') }} ? Cette action révoquera immédiatement l\'accès.')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ resource ~ '_' ~ item[idKey]) }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     {# --- Generic fallback (Curation Sets, Stemming, Analytics, NL Models, Conversations) --- #}
     {% else %}
         <div class="card border-0 shadow-sm">

@@ -30,9 +30,57 @@ class ConfigurationTest extends TestCase
         $result = $this->processConfiguration($config);
 
         $this->assertSame('my-secret', $result['api_key']);
-        $this->assertTrue($result['auto_update']);
+        $this->assertTrue($result['auto_update']['enabled']);
+        $this->assertSame('sync', $result['auto_update']['mode']);
         $this->assertFalse($result['cluster']['enabled']);
         $this->assertSame('leader_only', $result['cluster']['read_preference']);
+    }
+
+    public function testAutoUpdateBoolTrueBackwardCompat(): void
+    {
+        $result = $this->processConfiguration([
+            'api_key' => 'key',
+            'auto_update' => true,
+            'cluster' => ['nodes' => [['host' => 'localhost']]],
+        ]);
+
+        $this->assertTrue($result['auto_update']['enabled']);
+        $this->assertSame('sync', $result['auto_update']['mode']);
+    }
+
+    public function testAutoUpdateBoolFalseBackwardCompat(): void
+    {
+        $result = $this->processConfiguration([
+            'api_key' => 'key',
+            'auto_update' => false,
+            'cluster' => ['nodes' => [['host' => 'localhost']]],
+        ]);
+
+        $this->assertFalse($result['auto_update']['enabled']);
+    }
+
+    public function testAutoUpdateAsyncMode(): void
+    {
+        $result = $this->processConfiguration([
+            'api_key' => 'key',
+            'auto_update' => ['enabled' => true, 'mode' => 'async'],
+            'cluster' => ['nodes' => [['host' => 'localhost']]],
+        ]);
+
+        $this->assertTrue($result['auto_update']['enabled']);
+        $this->assertSame('async', $result['auto_update']['mode']);
+    }
+
+    public function testAutoUpdateInvalidModeThrowsException(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessageMatches('/auto_update.mode must be/');
+
+        $this->processConfiguration([
+            'api_key' => 'key',
+            'auto_update' => ['enabled' => true, 'mode' => 'invalid'],
+            'cluster' => ['nodes' => [['host' => 'localhost']]],
+        ]);
     }
 
     public function testInvalidLogLevelThrowsException(): void

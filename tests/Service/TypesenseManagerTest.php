@@ -124,12 +124,12 @@ class TypesenseManagerTest extends TestCase
     {
         $entity = new \stdClass();
         $schema = ['name' => 'my_collection'];
-        $entities = [$entity];
 
         $this->schemaGeneratorMock->method('generate')->willReturn($schema);
 
         $repositoryMock = $this->createMock(EntityRepository::class);
-        $repositoryMock->method('findAll')->willReturn($entities);
+        $repositoryMock->expects($this->once())->method('count')->with([])->willReturn(1);
+        $repositoryMock->expects($this->once())->method('findBy')->with([], null, 1000, 0)->willReturn([$entity]);
         $this->emMock->expects($this->once())->method('getRepository')->with('stdClass')->willReturn($repositoryMock);
 
         $this->normalizerMock->expects($this->once())->method('normalize')->with($entity)->willReturn(['document' => ['id' => 1, 'field' => 'value']]);
@@ -155,7 +155,8 @@ class TypesenseManagerTest extends TestCase
         $this->schemaGeneratorMock->method('generate')->willReturn($schema);
 
         $repositoryMock = $this->createMock(EntityRepository::class);
-        $repositoryMock->method('findAll')->willReturn($entities);
+        $repositoryMock->expects($this->once())->method('count')->with([])->willReturn(2);
+        $repositoryMock->expects($this->once())->method('findBy')->with([], null, 1000, 0)->willReturn($entities);
         $this->emMock->method('getRepository')->willReturn($repositoryMock);
 
         $this->normalizerMock->method('normalize')->willReturn(['document' => ['id' => 1]]);
@@ -174,7 +175,7 @@ class TypesenseManagerTest extends TestCase
         $this->schemaGeneratorMock->method('generate')->willReturn($schema);
 
         $repositoryMock = $this->createMock(EntityRepository::class);
-        $repositoryMock->method('findAll')->willReturn([]);
+        $repositoryMock->expects($this->once())->method('count')->with([])->willReturn(0);
         $this->emMock->method('getRepository')->willReturn($repositoryMock);
 
         $this->ioMock->expects($this->once())->method('warning')->with("Aucun document trouvé pour l'entité 'stdClass'.");
@@ -190,7 +191,8 @@ class TypesenseManagerTest extends TestCase
         $this->schemaGeneratorMock->method('generate')->willReturn($schema);
 
         $repositoryMock = $this->createMock(EntityRepository::class);
-        $repositoryMock->method('findAll')->willReturn([new \stdClass()]);
+        $repositoryMock->expects($this->once())->method('count')->with([])->willReturn(1);
+        $repositoryMock->expects($this->once())->method('findBy')->with([], null, 1000, 0)->willReturn([new \stdClass()]);
         $this->emMock->method('getRepository')->willReturn($repositoryMock);
 
         $this->normalizerMock->method('normalize')->willReturn(null);
@@ -208,7 +210,8 @@ class TypesenseManagerTest extends TestCase
         $this->schemaGeneratorMock->method('generate')->willReturn($schema);
 
         $repositoryMock = $this->createMock(EntityRepository::class);
-        $repositoryMock->method('findAll')->willReturn([new \stdClass()]);
+        $repositoryMock->expects($this->once())->method('count')->with([])->willReturn(1);
+        $repositoryMock->method('findBy')->willReturn([new \stdClass()]);
         $this->emMock->method('getRepository')->willReturn($repositoryMock);
 
         $this->normalizerMock->method('normalize')->willReturn(['document' => ['id' => 1]]);
@@ -224,6 +227,39 @@ class TypesenseManagerTest extends TestCase
 
         $count = $this->manager->reindexEntityCollection('stdClass', $this->ioMock);
         $this->assertSame(0, $count);
+    }
+
+    public function testReindexEntityCollectionWithMultipleBatches(): void
+    {
+        $schema = ['name' => 'my_collection'];
+        $this->schemaGeneratorMock->method('generate')->willReturn($schema);
+
+        $repositoryMock = $this->createMock(EntityRepository::class);
+        $repositoryMock->expects($this->once())->method('count')->with([])->willReturn(3);
+        $repositoryMock->method('findBy')
+            ->willReturnMap([
+                [[], null, 2, 0, [new \stdClass(), new \stdClass()]],
+                [[], null, 2, 2, [new \stdClass()]],
+            ]);
+        $this->emMock->method('getRepository')->willReturn($repositoryMock);
+
+        $this->normalizerMock->method('normalize')->willReturn(['document' => ['id' => 1]]);
+        $this->clientMock->expects($this->exactly(2))->method('importDocuments')
+            ->willReturn([['success' => true]]);
+
+        $count = $this->manager->reindexEntityCollection('stdClass', null, 2);
+        $this->assertSame(2, $count);
+    }
+
+    public function testReindexEntityCollectionInvalidBatchSizeThrows(): void
+    {
+        $this->schemaGeneratorMock->method('generate')->willReturn(['name' => 'my_collection']);
+
+        $repositoryMock = $this->createMock(EntityRepository::class);
+        $this->emMock->method('getRepository')->willReturn($repositoryMock);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->manager->reindexEntityCollection('stdClass', null, 0);
     }
 
     #[DataProvider('provideProxyMethods')]

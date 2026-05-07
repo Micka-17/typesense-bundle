@@ -63,9 +63,18 @@ class TypesenseManager
         }
     }
 
-    /** @param class-string $entityClass */
-    public function reindexEntityCollection(string $entityClass, ?SymfonyStyle $io = null): int
+    /**
+     * @param class-string $entityClass
+     * @param int $batchSize Number of entities loaded per iteration (avoids OOM on large tables).
+     *                       Call $em->clear() between batches — lazy-loaded associations will be
+     *                       re-fetched automatically by Doctrine on next access.
+     */
+    public function reindexEntityCollection(string $entityClass, ?SymfonyStyle $io = null, int $batchSize = 1000): int
     {
+        if ($batchSize < 1) {
+            throw new \InvalidArgumentException('batchSize must be >= 1.');
+        }
+
         $schema = $this->schemaGenerator->generate($entityClass);
         $collectionName = $schema['name'];
 
@@ -73,8 +82,7 @@ class TypesenseManager
 
         /** @var \Doctrine\ORM\EntityRepository<object> $repo */
         $repo = $this->em->getRepository($entityClass);
-        $documents = $repo->findAll();
-        $totalCount = count($documents);
+        $totalCount = $repo->count([]);
 
         if ($totalCount === 0) {
             $io?->warning("Aucun document trouvé pour l'entité '$entityClass'.");
@@ -82,37 +90,54 @@ class TypesenseManager
         }
 
         $io?->progressStart($totalCount);
-        $typesenseDocs = [];
-        foreach ($documents as $entity) {
-            $normalizedResult = $this->normalizer->normalize($entity);
-            if ($normalizedResult && isset($normalizedResult['document'])) {
-                $typesenseDocs[] = $normalizedResult['document'];
-            }
-            $io?->progressAdvance();
-        }
-        $io?->progressFinish();
 
-        if (empty($typesenseDocs)) {
-            $io?->warning("La normalisation n'a produit aucun document à indexer.");
-            return 0;
-        }
+        $successCount = 0;
+        $failureCount = 0;
+        $firstError = '';
+        $offset = 0;
 
         try {
-            $importResults = $this->client->importDocuments($collectionName, $typesenseDocs);
-            
-            $successCount = 0;
-            $failureCount = 0;
-            $firstError = '';
+            while ($offset < $totalCount) {
+                /** @var list<object> $batch */
+                $batch = $repo->findBy([], null, $batchSize, $offset);
 
-            foreach ($importResults as $result) {
-                if ($result['success'] === true) {
-                    $successCount++;
-                } else {
-                    $failureCount++;
-                    if (empty($firstError)) {
-                        $firstError = $result['error'] ?? 'Raison inconnue.';
+                if ($batch === []) {
+                    break;
+                }
+
+                $typesenseDocs = [];
+                foreach ($batch as $entity) {
+                    $normalizedResult = $this->normalizer->normalize($entity);
+                    if ($normalizedResult && isset($normalizedResult['document'])) {
+                        $typesenseDocs[] = $normalizedResult['document'];
+                    }
+                    $io?->progressAdvance();
+                }
+
+                if ($typesenseDocs !== []) {
+                    $importResults = $this->client->importDocuments($collectionName, $typesenseDocs);
+                    foreach ($importResults as $result) {
+                        if ($result['success'] === true) {
+                            $successCount++;
+                        } else {
+                            $failureCount++;
+                            if ($firstError === '') {
+                                $firstError = $result['error'] ?? 'Raison inconnue.';
+                            }
+                        }
                     }
                 }
+
+                // Free first-level cache to avoid OOM on large datasets.
+                $this->em->clear();
+                $offset += $batchSize;
+            }
+
+            $io?->progressFinish();
+
+            if ($successCount === 0 && $failureCount === 0) {
+                $io?->warning("La normalisation n'a produit aucun document à indexer.");
+                return 0;
             }
 
             if ($failureCount > 0) {
@@ -123,20 +148,20 @@ class TypesenseManager
             }
 
             return $successCount;
-            
+
         } catch (ObjectNotFound $e) {
             $errorMessage = "La collection '$collectionName' n'existe pas. Veuillez la créer avant de lancer une indexation.";
             $suggestion = "Astuce : utilisez la commande 'micka17:typesense:manage recreate \"$entityClass\"' pour la créer.";
-            
+
             $this->errorTracker->trackError(
                 "Tentative d'indexation dans une collection inexistante",
                 ['collection' => $collectionName],
                 $e
             );
-            
+
             $io?->error($errorMessage);
             $io?->note($suggestion);
-            
+
             return 0;
 
         } catch (\Exception $e) {

@@ -26,7 +26,8 @@ class TypesenseManageCommand extends Command
     {
         $this
             ->addArgument('action', InputArgument::REQUIRED, 'L\'action à effectuer : create, delete, recreate, reindex')
-            ->addArgument('entity', InputArgument::REQUIRED, 'La classe de l\'entité à gérer (ex: App\Entity\Cocktail)');
+            ->addArgument('entity', InputArgument::REQUIRED, 'La classe de l\'entité à gérer (ex: App\Entity\Cocktail)')
+            ->addOption('batch-size', null, InputOption::VALUE_REQUIRED, 'Nombre d\'entités par lot (action reindex).', 1000);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -51,7 +52,8 @@ class TypesenseManageCommand extends Command
                 $this->manager->recreateCollectionForEntity($entityClass, $io);
                 break;
             case 'reindex':
-                $this->manager->reindexEntityCollection($entityClass, $io);
+                $batchSize = (int) $input->getOption('batch-size');
+                $this->manager->reindexEntityCollection($entityClass, $io, $batchSize);
                 break;
             default:
                 $io->error("Action non valide : '$action'. Actions possibles : create, delete, recreate, reindex.");
