@@ -118,6 +118,15 @@ class TypesenseClient
     }
 
     /**
+     * Export all documents as a JSONL string (one JSON object per line).
+     * @param array<string, mixed> $queryParams  e.g. ['filter_by' => 'stock:>0', 'include_fields' => 'id,name']
+     */
+    public function exportDocuments(string $collectionName, array $queryParams = []): string
+    {
+        return $this->client->collections[$collectionName]->documents->export($queryParams);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function retrieveDocument(string $collectionName, string $documentId): array
@@ -445,7 +454,51 @@ class TypesenseClient
         return $this->client->conversations->getModels()[$id]->delete();
     }
 
+    // Aliases
+
+    /** @return array<string, mixed> */
+    public function upsertAlias(string $name, string $collectionName): array
+    {
+        return $this->client->aliases->upsert($name, ['collection_name' => $collectionName]);
+    }
+
+    /** @return array<string, mixed> */
+    public function listAliases(): array
+    {
+        return $this->client->aliases->retrieve();
+    }
+
+    /** @return array<string, mixed> */
+    public function retrieveAlias(string $name): array
+    {
+        return $this->client->aliases[$name]->retrieve();
+    }
+
+    /** @return array<string, mixed> */
+    public function deleteAlias(string $name): array
+    {
+        return $this->client->aliases[$name]->delete();
+    }
+
     // Infrastructure
+
+    /**
+     * Dynamically update Typesense server configuration (e.g. cache-num-entries).
+     * Uses reflection to reach the private ApiCall since typesense-php has no dedicated Config class.
+     * @param array<string, int|string|bool> $params  e.g. ['cache-num-entries' => 1000]
+     * @return array<string, mixed>
+     */
+    public function updateConfig(array $params): array
+    {
+        $reflection = new \ReflectionProperty(Client::class, 'apiCall');
+        /** @var \Typesense\ApiCall $apiCall */
+        $apiCall = $reflection->getValue($this->client);
+
+        /** @var array<string, mixed> $result */
+        $result = $apiCall->post('/config', $params);
+
+        return $result;
+    }
 
     /** @return array<string, mixed> */
     public function health(): array

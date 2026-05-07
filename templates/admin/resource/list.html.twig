@@ -134,6 +134,34 @@
             </div>
         </div>
 
+    {# --- Aliases --- #}
+    {% elseif resource == 'aliases' %}
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr><th>Nom</th><th>Collection cible</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td><code class="text-primary">{{ item.name }}</code></td>
+                            <td><span class="badge bg-light text-dark border">{{ item.collection_name ?? '—' }}</span></td>
+                            <td class="text-end">
+                                <form action="{{ path('micka17_typesense_admin_resource_delete', {resource: resource, id: item[idKey]}) }}"
+                                      method="post" class="d-inline"
+                                      onsubmit="return confirm('Supprimer l\'alias &quot;{{ item[idKey]|e('js') }}&quot; ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ resource ~ '_' ~ item[idKey]) }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     {# --- Generic fallback (Curation Sets, Stemming, Analytics, NL Models, Conversations) --- #}
     {% else %}
         <div class="card border-0 shadow-sm">

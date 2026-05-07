@@ -216,6 +216,7 @@ class SchemaGenerator
 
         $this->setIfNotNull($options, 'reference', $attribute->reference);
         $this->setIfNotNull($options, 'async_reference', $attribute->asyncReference);
+        // false must be sent explicitly to disable cascade on JOIN fields; null means "omit from schema".
         $this->setIfNotNull($options, 'cascade_delete', $attribute->cascadeDelete);
         $this->setIfNotNull($options, 'truncate', $attribute->truncate);
         $this->setIfNotEmpty($options, 'token_separators', $attribute->tokenSeparators);

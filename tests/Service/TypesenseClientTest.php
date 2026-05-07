@@ -5,6 +5,8 @@ namespace Micka17\TypesenseBundle\Tests\Service;
 use Micka17\TypesenseBundle\Service\TypesenseClient;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
+use Typesense\Alias;
+use Typesense\Aliases;
 use Typesense\Client;
 use Typesense\Collection;
 use Typesense\Collections;
@@ -258,6 +260,108 @@ class TypesenseClientTest extends TestCase
 
         $result = $this->typesenseClient->deleteDocument($collectionName, $documentId);
         $this->assertEquals($expectedResult, $result);
+    }
+
+    public function testUpdateConfig(): void
+    {
+        // Build a real Client with a mock ApiCall via reflection
+        $realClient = $this->typesenseClient->getClient();
+
+        $mockApiCall = $this->createMock(\Typesense\ApiCall::class);
+        $mockApiCall->expects($this->once())
+            ->method('post')
+            ->with('/config', ['cache-num-entries' => 1000])
+            ->willReturn(['ok' => true]);
+
+        $reflection = new \ReflectionProperty(Client::class, 'apiCall');
+        $reflection->setValue($realClient, $mockApiCall);
+
+        $result = $this->typesenseClient->updateConfig(['cache-num-entries' => 1000]);
+        $this->assertEquals(['ok' => true], $result);
+    }
+
+    public function testExportDocuments(): void
+    {
+        $jsonl = '{"id":"1","name":"laptop"}' . "\n" . '{"id":"2","name":"phone"}';
+
+        $mockDocuments = $this->createMock(\Typesense\Documents::class);
+        $mockDocuments->expects($this->once())
+            ->method('export')
+            ->with(['filter_by' => 'stock:>0'])
+            ->willReturn($jsonl);
+
+        $collectionMock = $this->createMock(\Typesense\Collection::class);
+        $collectionMock->documents = $mockDocuments;
+
+        $this->mockCollections
+            ->expects($this->once())
+            ->method('offsetGet')
+            ->with('products')
+            ->willReturn($collectionMock);
+
+        $result = $this->typesenseClient->exportDocuments('products', ['filter_by' => 'stock:>0']);
+        $this->assertSame($jsonl, $result);
+    }
+
+    public function testUpsertAlias(): void
+    {
+        $expected = ['name' => 'products', 'collection_name' => 'products_v2'];
+
+        $mockAliases = $this->createMock(Aliases::class);
+        $mockAliases->expects($this->once())
+            ->method('upsert')
+            ->with('products', ['collection_name' => 'products_v2'])
+            ->willReturn($expected);
+
+        $this->mockClient->aliases = $mockAliases;
+
+        $result = $this->typesenseClient->upsertAlias('products', 'products_v2');
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testListAliases(): void
+    {
+        $expected = ['aliases' => [['name' => 'products', 'collection_name' => 'products_v1']]];
+
+        $mockAliases = $this->createMock(Aliases::class);
+        $mockAliases->expects($this->once())->method('retrieve')->willReturn($expected);
+
+        $this->mockClient->aliases = $mockAliases;
+
+        $result = $this->typesenseClient->listAliases();
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testRetrieveAlias(): void
+    {
+        $expected = ['name' => 'products', 'collection_name' => 'products_v1'];
+
+        $mockAlias = $this->createMock(Alias::class);
+        $mockAlias->expects($this->once())->method('retrieve')->willReturn($expected);
+
+        $mockAliases = $this->createMock(Aliases::class);
+        $mockAliases->expects($this->once())->method('offsetGet')->with('products')->willReturn($mockAlias);
+
+        $this->mockClient->aliases = $mockAliases;
+
+        $result = $this->typesenseClient->retrieveAlias('products');
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testDeleteAlias(): void
+    {
+        $expected = ['name' => 'products'];
+
+        $mockAlias = $this->createMock(Alias::class);
+        $mockAlias->expects($this->once())->method('delete')->willReturn($expected);
+
+        $mockAliases = $this->createMock(Aliases::class);
+        $mockAliases->expects($this->once())->method('offsetGet')->with('products')->willReturn($mockAlias);
+
+        $this->mockClient->aliases = $mockAliases;
+
+        $result = $this->typesenseClient->deleteAlias('products');
+        $this->assertEquals($expected, $result);
     }
 
 }

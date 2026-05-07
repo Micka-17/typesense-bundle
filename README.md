@@ -369,6 +369,13 @@ php bin/console micka17:typesense:doctor
 # Re-index a specific entity
 php bin/console typesense:reindex "App\Entity\Product"
 
+# Export documents as JSONL
+php bin/console micka17:typesense:documents:export products
+php bin/console micka17:typesense:documents:export products --output=/tmp/export.jsonl --filter-by="stock:>0"
+
+# Update Typesense server config dynamically
+php bin/console micka17:typesense:config:update cache-num-entries=1000
+
 # Migrate V1 config → V2 YAML (dry-run, generates output)
 php bin/console micka17:typesense:migrate-config
 php bin/console micka17:typesense:migrate-config --output=config/packages/typesense_v2.yaml
@@ -376,7 +383,31 @@ php bin/console micka17:typesense:migrate-config --output=config/packages/typese
 
 ### Resources
 
-Each V2 resource type has `apply`, `list`, and `delete` commands:
+### Aliases (zero-downtime reindex)
+
+```bash
+# Create or update an alias
+php bin/console micka17:typesense:aliases:upsert products products_v2
+
+# List all aliases
+php bin/console micka17:typesense:aliases:list
+
+# Delete an alias
+php bin/console micka17:typesense:aliases:delete products
+```
+
+**PHP — atomic swap:**
+
+```php
+use Micka17\TypesenseBundle\Service\AliasManager;
+
+$previous = $aliasManager->swapAlias('products', 'products_v2');
+// $previous = 'products_v1' — the old collection, safe to delete
+```
+
+> See [docs/guides/01-zero-downtime-reindex.md](docs/guides/01-zero-downtime-reindex.md) for the full workflow.
+
+### Resources
 
 ```bash
 php bin/console micka17:typesense:synonym-sets:apply
@@ -510,6 +541,19 @@ typesense:
 php bin/console micka17:typesense:sync
 php bin/console micka17:typesense:doctor
 ```
+
+---
+
+## Advanced Guides
+
+| Guide | Description |
+|---|---|
+| [Zero-downtime reindex](docs/guides/01-zero-downtime-reindex.md) | Alias workflow — swap collections without search interruption |
+| [Vector search & auto-embedding](docs/guides/02-vector-search-auto-embedding.md) | Built-in models, OpenAI, hybrid search, MMR diversification |
+| [Conversational RAG search](docs/guides/03-conversational-rag-search.md) | Multi-turn chat with LLM-generated answers from your data |
+| [Analytics pipeline](docs/guides/04-analytics-pipeline.md) | Track queries, clicks, and build a popular-searches feed |
+| [Search-as-you-type](docs/guides/05-search-as-you-type.md) | Autocomplete UI with a Symfony JSON endpoint (~20 lines JS) |
+| [Search parameters reference](docs/reference/search-parameters.md) | All Typesense search parameters including V30+ additions |
 
 ---
 

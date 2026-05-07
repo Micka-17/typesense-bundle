@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Micka17\TypesenseBundle\Controller\Admin;
 
+use Micka17\TypesenseBundle\Service\AliasManager;
 use Micka17\TypesenseBundle\Service\AnalyticsManager;
 use Micka17\TypesenseBundle\Service\ConversationManager;
 use Micka17\TypesenseBundle\Service\CurationSetManager;
@@ -31,6 +32,7 @@ class ResourceController extends AbstractController
         private readonly AnalyticsManager $analyticsManager,
         private readonly NaturalLanguageSearchManager $nlSearchManager,
         private readonly ConversationManager $conversationManager,
+        private readonly AliasManager $aliasManager,
     ) {
         $this->registry = [
             'collections' => [
@@ -97,10 +99,18 @@ class ResourceController extends AbstractController
                 'list'    => fn() => $this->conversationManager->listModels()['models'] ?? [],
                 'delete'  => fn(string $id) => $this->conversationManager->deleteModel($id),
             ],
+            'aliases' => [
+                'label'   => 'Aliases',
+                'icon'    => 'bi-link-45deg',
+                'idKey'   => 'name',
+                'columns' => ['Nom' => 'name', 'Collection' => 'collection_name'],
+                'list'    => fn() => $this->aliasManager->listAliases()['aliases'] ?? [],
+                'delete'  => fn(string $id) => $this->aliasManager->deleteAlias($id),
+            ],
         ];
     }
 
-    #[Route('/{resource}', name: 'micka17_typesense_admin_resource_list', requirements: ['resource' => 'collections|presets|synonym-sets|curation-sets|stemming|analytics|nl-search-models|conversations'])]
+    #[Route('/{resource}', name: 'micka17_typesense_admin_resource_list', requirements: ['resource' => 'collections|presets|synonym-sets|curation-sets|stemming|analytics|nl-search-models|conversations|aliases'])]
     public function list(string $resource): Response
     {
         $config = $this->registry[$resource];
@@ -123,7 +133,7 @@ class ResourceController extends AbstractController
         ]);
     }
 
-    #[Route('/{resource}/{id}/delete', name: 'micka17_typesense_admin_resource_delete', methods: ['POST'], requirements: ['resource' => 'collections|presets|synonym-sets|curation-sets|stemming|analytics|nl-search-models|conversations'])]
+    #[Route('/{resource}/{id}/delete', name: 'micka17_typesense_admin_resource_delete', methods: ['POST'], requirements: ['resource' => 'collections|presets|synonym-sets|curation-sets|stemming|analytics|nl-search-models|conversations|aliases'])]
     public function delete(Request $request, string $resource, string $id): Response
     {
         if (!$this->isCsrfTokenValid('delete_' . $resource . '_' . $id, $request->request->get('_token'))) {

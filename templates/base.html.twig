@@ -41,6 +41,10 @@
            href="{{ path('micka17_typesense_admin_resource_list', {resource: 'collections'}) }}">
             <i class="bi bi-collection"></i> Collections
         </a>
+        <a class="nav-link {% if app.request.attributes.get('resource') == 'aliases' %}active{% endif %}"
+           href="{{ path('micka17_typesense_admin_resource_list', {resource: 'aliases'}) }}">
+            <i class="bi bi-link-45deg"></i> Aliases
+        </a>
 
         <div class="section-label">Recherche</div>
         <a class="nav-link {% if app.request.attributes.get('resource') == 'presets' %}active{% endif %}"

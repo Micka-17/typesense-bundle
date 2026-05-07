@@ -36,6 +36,8 @@ services:
   Micka17\TypesenseBundle\Service\ConversationManager:
     lazy: true
 
+  Micka17\TypesenseBundle\Service\AliasManager: ~
+
   Micka17\TypesenseBundle\Command\TypesenseCreateCollectionCommand:
     public: true
 
@@ -169,6 +171,21 @@ services:
       $errorTracker: '@Micka17\TypesenseBundle\Service\TypesenseErrorTracker'
 
   Micka17\TypesenseBundle\Service\TypesenseNormalizer: ~
+
+  Micka17\TypesenseBundle\Command\TypesenseDocumentsExportCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseConfigUpdateCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseAliasesListCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseAliasesUpsertCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseAliasesDeleteCommand:
+    public: true
 
   Micka17\TypesenseBundle\Command\TypesenseManageCommand:
     public: true

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Micka17\TypesenseBundle\Controller\Admin;
 
+use Micka17\TypesenseBundle\Service\AliasManager;
 use Micka17\TypesenseBundle\Service\AnalyticsManager;
 use Micka17\TypesenseBundle\Service\ConversationManager;
 use Micka17\TypesenseBundle\Service\CurationSetManager;
@@ -29,6 +30,7 @@ class DashboardController extends AbstractController
         private readonly AnalyticsManager $analyticsManager,
         private readonly NaturalLanguageSearchManager $nlSearchManager,
         private readonly ConversationManager $conversationManager,
+        private readonly AliasManager $aliasManager,
     ) {}
 
     #[Route('/', name: 'micka17_typesense_admin_dashboard')]
@@ -55,6 +57,7 @@ class DashboardController extends AbstractController
                 if (isset($data['dictionaries'])) return count($data['dictionaries']);
                 if (isset($data['rules'])) return count($data['rules']);
                 if (isset($data['models'])) return count($data['models']);
+                if (isset($data['aliases'])) return count($data['aliases']);
                 if (is_array($data)) return count($data);
                 return 0;
             } catch (\Throwable) {
@@ -71,6 +74,7 @@ class DashboardController extends AbstractController
             'analytics'      => $fetch(fn() => $this->analyticsManager->listRules()),
             'nl_search'      => $fetch(fn() => $this->nlSearchManager->listModels()),
             'conversations'  => $fetch(fn() => $this->conversationManager->listModels()),
+            'aliases'        => $fetch(fn() => $this->aliasManager->listAliases()),
         ];
 
         return $this->render('@Micka17Typesense/admin/dashboard/index.html.twig', [

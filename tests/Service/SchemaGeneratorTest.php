@@ -229,6 +229,26 @@ class SchemaGeneratorTest extends TestCase
         }
     }
 
+    public function testCascadeDeleteFalseIsEmittedInSchema(): void
+    {
+        // Explicit false must appear in the schema so Typesense disables cascade on the JOIN field.
+        $schema = $this->generator->generate(Review::class);
+        $fields = array_column($schema['fields'], null, 'name');
+
+        $this->assertArrayHasKey('cascade_delete', $fields['productId']);
+        $this->assertFalse($fields['productId']['cascade_delete']);
+    }
+
+    public function testCascadeDeleteNullIsAbsentFromSchema(): void
+    {
+        // When cascadeDelete is not set (default null), the key must be absent so Typesense uses its default.
+        $schema = $this->generator->generate(Book::class);
+
+        foreach ($schema['fields'] as $field) {
+            $this->assertArrayNotHasKey('cascade_delete', $field);
+        }
+    }
+
     // --- Error: missing attribute ---
 
     public function testMissingIndexableAttributeThrowsException(): void
