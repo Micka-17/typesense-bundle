@@ -14,7 +14,6 @@ use Symfony\Component\Finder\Finder;
 use Micka17\TypesenseBundle\Service\TypesenseClient;
 use Typesense\Exceptions\ObjectAlreadyExists;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 #[AsCommand(
     name: 'typesense:create-collection',
@@ -22,15 +21,11 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 )]
 class TypesenseCreateCollectionCommand extends Command
 {
-    private SchemaGenerator $schemaGenerator;
-    private TypesenseClient $typesenseClient;
-    private string $projectDir;
-
-    public function __construct(SchemaGenerator $schemaGenerator, TypesenseClient $typesenseClient, #[Autowire('%kernel.project_dir%')] ParameterBagInterface $projectDir)
-    {
-        $this->schemaGenerator = $schemaGenerator;
-        $this->typesenseClient = $typesenseClient;
-        $this->projectDir = $projectDir->get('kernel.project_dir');
+    public function __construct(
+        private readonly SchemaGenerator $schemaGenerator,
+        private readonly TypesenseClient $typesenseClient,
+        #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
+    ) {
         parent::__construct();
     }
 
