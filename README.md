@@ -49,7 +49,7 @@ typesense:
         App\Entity\Product: ~
         App\Entity\Category: ~
 
-    auto_update: true   # auto-index on Doctrine persist/update/remove
+    auto_update: true   # or: {enabled: true, mode: sync|async}
 ```
 
 ```dotenv
@@ -366,8 +366,9 @@ php bin/console micka17:typesense:sync
 # Diagnose configuration vs Typesense state
 php bin/console micka17:typesense:doctor
 
-# Re-index a specific entity
+# Re-index a specific entity (paginated batches, OOM-safe)
 php bin/console typesense:reindex "App\Entity\Product"
+php bin/console typesense:reindex "App\Entity\Product" --batch-size=500
 
 # Export documents as JSONL
 php bin/console micka17:typesense:documents:export products
@@ -381,7 +382,58 @@ php bin/console micka17:typesense:migrate-config
 php bin/console micka17:typesense:migrate-config --output=config/packages/typesense_v2.yaml
 ```
 
-### Resources
+### Schema diff / ALTER
+
+Compare the live Typesense collection schema against the PHP attribute schema without recreating the collection.
+
+```bash
+# Show what would change
+php bin/console micka17:typesense:schema:diff "App\Entity\Product"
+
+# Apply non-destructive changes (add/drop fields) via PATCH
+php bin/console micka17:typesense:schema:diff "App\Entity\Product" --apply
+
+# Force full recreation when field types changed (all documents will be lost)
+php bin/console micka17:typesense:schema:diff "App\Entity\Product" --force-recreate
+```
+
+The command exits with code `1` (and explains why) when the diff contains field type conflicts or collection-level metadata changes — those require `--force-recreate`.
+
+### API Keys
+
+```bash
+# List all keys (values are never shown after creation)
+php bin/console micka17:typesense:keys:list
+
+# Create a key — the value is shown ONCE, copy it immediately
+php bin/console micka17:typesense:keys:create \
+  --description="Search only" \
+  --actions=documents:search \
+  --collections=products
+
+# Retrieve metadata for a key by ID
+php bin/console micka17:typesense:keys:retrieve 42
+
+# Delete a key (immediately revokes access)
+php bin/console micka17:typesense:keys:delete 42 --yes
+```
+
+**PHP:**
+
+```php
+use Micka17\TypesenseBundle\Service\KeysManager;
+
+// Create — returns ['id' => ..., 'value' => 'secret...'] (value only at creation)
+$key = $keysManager->createKey([
+    'description' => 'Search only',
+    'actions'     => ['documents:search'],
+    'collections' => ['products'],
+]);
+
+$keysManager->listKeys();        // ['keys' => [...]]
+$keysManager->retrieveKey(42);   // ['id' => 42, 'description' => ...]
+$keysManager->deleteKey(42);
+```
 
 ### Aliases (zero-downtime reindex)
 
@@ -455,6 +507,52 @@ Protect the prefix in your firewall as needed:
 access_control:
     - { path: ^/admin/typesense, roles: ROLE_ADMIN }
 ```
+
+---
+
+## Async Indexing (Symfony Messenger)
+
+By default, Doctrine events (persist/update/remove) index documents **synchronously** in the same request. For large documents or high-traffic apps, switch to async mode using [Symfony Messenger](https://symfony.com/doc/current/messenger.html).
+
+### 1. Enable async mode
+
+```yaml
+# config/packages/typesense.yaml
+typesense:
+    auto_update:
+        enabled: true
+        mode: async   # dispatches IndexDocumentMessage / DeleteDocumentMessage
+```
+
+### 2. Route the messages to a transport
+
+```yaml
+# config/packages/messenger.yaml
+framework:
+    messenger:
+        transports:
+            async: '%env(MESSENGER_TRANSPORT_DSN)%'
+        routing:
+            Micka17\TypesenseBundle\Messenger\IndexDocumentMessage: async
+            Micka17\TypesenseBundle\Messenger\DeleteDocumentMessage: async
+```
+
+### 3. Run the worker
+
+```bash
+php bin/console messenger:consume async --time-limit=3600
+```
+
+### How it works
+
+| Event | Message dispatched |
+|---|---|
+| `postPersist` / `postUpdate` | `IndexDocumentMessage(entityClass, entityId)` |
+| `preRemove` | `DeleteDocumentMessage(collectionName, documentId)` |
+
+The handler re-fetches the entity from the database before normalizing, so you always index the freshest data. If the entity was deleted between dispatch and handling, the handler silently skips it.
+
+> **Note:** `auto_update: true` (the default) is equivalent to `{enabled: true, mode: sync}` — no migration needed.
 
 ---
 
