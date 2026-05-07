@@ -95,7 +95,7 @@ class TypesenseCreateCollectionCommand extends Command
             $io->info("Création de la collection '$collectionName' sur Typesense...");
 
             try {
-                $this->typesenseClient->client->collections->create($schema);
+                $this->typesenseClient->createCollection($schema);
                 $io->success("La collection '$collectionName' a été créée avec succès !");
             } catch (ObjectAlreadyExists $e) {
                 $io->warning("La collection '$collectionName' existe déjà. Aucune action n'a été effectuée.");

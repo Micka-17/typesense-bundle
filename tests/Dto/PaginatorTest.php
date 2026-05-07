@@ -9,61 +9,54 @@ use PHPUnit\Framework\TestCase;
 
 class PaginatorTest extends TestCase
 {
-    public function testGetters()
+    public function testPublicProperties(): void
     {
         $paginator = new Paginator(['item1', 'item2'], 2, 10, 100);
 
-        $this->assertSame(['item1', 'item2'], $paginator->getItems());
-        $this->assertSame(2, $paginator->getCurrentPage());
-        $this->assertSame(10, $paginator->getPerPage());
-        $this->assertSame(100, $paginator->getTotal());
+        $this->assertSame(['item1', 'item2'], $paginator->items);
+        $this->assertSame(2, $paginator->currentPage);
+        $this->assertSame(10, $paginator->perPage);
+        $this->assertSame(100, $paginator->total);
     }
 
-    public function testGetLastPage()
+    public function testLastPageHook(): void
     {
-        $paginator = new Paginator([], 1, 10, 100);
-        $this->assertSame(10, $paginator->getLastPage());
-
-        $paginator = new Paginator([], 1, 10, 95);
-        $this->assertSame(10, $paginator->getLastPage());
-
-        $paginator = new Paginator([], 1, 10, 0);
-        $this->assertSame(0, $paginator->getLastPage());
+        $this->assertSame(10, (new Paginator([], 1, 10, 100))->lastPage);
+        $this->assertSame(10, (new Paginator([], 1, 10, 95))->lastPage);
+        $this->assertSame(1, (new Paginator([], 1, 10, 0))->lastPage);  // max(1, …)
+        $this->assertSame(1, (new Paginator([], 1, 10, 3))->lastPage);
     }
 
-    public function testHasPreviousPage()
+    public function testHasPreviousPageHook(): void
     {
-        $paginator = new Paginator([], 1, 10, 100);
-        $this->assertFalse($paginator->hasPreviousPage());
-
-        $paginator = new Paginator([], 2, 10, 100);
-        $this->assertTrue($paginator->hasPreviousPage());
+        $this->assertFalse((new Paginator([], 1, 10, 100))->hasPreviousPage);
+        $this->assertTrue((new Paginator([], 2, 10, 100))->hasPreviousPage);
     }
 
-    public function testGetPreviousPage()
+    public function testPreviousPageHook(): void
     {
-        $paginator = new Paginator([], 1, 10, 100);
-        $this->assertNull($paginator->getPreviousPage());
-
-        $paginator = new Paginator([], 3, 10, 100);
-        $this->assertSame(2, $paginator->getPreviousPage());
+        $this->assertNull((new Paginator([], 1, 10, 100))->previousPage);
+        $this->assertSame(2, (new Paginator([], 3, 10, 100))->previousPage);
     }
 
-    public function testHasNextPage()
+    public function testHasNextPageHook(): void
     {
-        $paginator = new Paginator([], 10, 10, 100);
-        $this->assertFalse($paginator->hasNextPage());
-
-        $paginator = new Paginator([], 9, 10, 100);
-        $this->assertTrue($paginator->hasNextPage());
+        $this->assertFalse((new Paginator([], 10, 10, 100))->hasNextPage);
+        $this->assertTrue((new Paginator([], 9, 10, 100))->hasNextPage);
     }
 
-    public function testGetNextPage()
+    public function testNextPageHook(): void
     {
-        $paginator = new Paginator([], 10, 10, 100);
-        $this->assertNull($paginator->getNextPage());
+        $this->assertNull((new Paginator([], 10, 10, 100))->nextPage);
+        $this->assertSame(9, (new Paginator([], 8, 10, 100))->nextPage);
+    }
 
-        $paginator = new Paginator([], 8, 10, 100);
-        $this->assertSame(9, $paginator->getNextPage());
+    public function testItemsAreReadonly(): void
+    {
+        $paginator = new Paginator(['a'], 1, 10, 1);
+
+        $this->expectException(\Error::class);
+        /** @phpstan-ignore-next-line */
+        $paginator->items = ['b'];
     }
 }

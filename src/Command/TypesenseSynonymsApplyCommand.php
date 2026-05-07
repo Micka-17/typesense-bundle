@@ -20,8 +20,13 @@ use Symfony\Component\Console\Attribute\AsCommand;
 )]
 class TypesenseSynonymsApplyCommand extends Command
 {
+    /** @var string */
     protected static $defaultName = 'micka17:typesense:synonyms:apply';
 
+    /**
+     * @param array<string, mixed> $indexableEntities
+     * @param array<string, mixed> $globalSynonyms
+     */
     public function __construct(
         private readonly TypesenseClient $client,
         private readonly array $indexableEntities,
@@ -55,7 +60,7 @@ class TypesenseSynonymsApplyCommand extends Command
         $io->section('Applying global synonyms...');
 
         foreach ($this->globalSynonyms as $synonym) {
-            $this->client->getOperations()->synonyms->upsert($synonym['id'], [
+            $this->client->getClient()->synonymSets->upsert($synonym['id'], [
                 'root' => $synonym['root'] ?? null,
                 'synonyms' => $synonym['synonyms'],
             ]);
@@ -88,7 +93,7 @@ class TypesenseSynonymsApplyCommand extends Command
             foreach ($attributes as $attribute) {
                 /** @var TypesenseSynonym $synonym */
                 $synonym = $attribute->newInstance();
-                $this->client->getOperations()->collections[$collectionName]->synonyms->upsert($synonym->id, [
+                $this->client->getClient()->collections[$collectionName]->synonyms->upsert($synonym->id, [
                     'root' => $synonym->root,
                     'synonyms' => $synonym->synonyms,
                 ]);
@@ -99,6 +104,9 @@ class TypesenseSynonymsApplyCommand extends Command
         $io->success('Entity synonyms applied.');
     }
 
+    /**
+     * @param ReflectionClass<object> $reflection
+     */
     private function getCollectionName(ReflectionClass $reflection): ?string
     {
         $attributes = $reflection->getAttributes(TypesenseIndexable::class);

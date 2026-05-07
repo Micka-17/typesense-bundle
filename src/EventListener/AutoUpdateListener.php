@@ -2,6 +2,7 @@
 
 namespace Micka17\TypesenseBundle\EventListener;
 
+use Micka17\TypesenseBundle\Attribute\TypesenseIndexable;
 use Micka17\TypesenseBundle\Service\TypesenseManager;
 use Micka17\TypesenseBundle\Service\TypesenseNormalizer;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
@@ -10,6 +11,9 @@ use ReflectionClass;
 
 class AutoUpdateListener
 {
+    /**
+     * @param array<class-string, string> $indexedEntities
+     */
     public function __construct(
         private readonly bool $isEnabled,
         private readonly array $indexedEntities,
@@ -17,16 +21,25 @@ class AutoUpdateListener
         private readonly TypesenseNormalizer $typesenseNormalizer
     ) {}
 
+    /**
+     * @param LifecycleEventArgs<\Doctrine\ORM\EntityManagerInterface> $args
+     */
     public function postPersist(LifecycleEventArgs $args): void
     {
         $this->handleUpdate($args);
     }
 
+    /**
+     * @param LifecycleEventArgs<\Doctrine\ORM\EntityManagerInterface> $args
+     */
     public function postUpdate(LifecycleEventArgs $args): void
     {
         $this->handleUpdate($args);
     }
 
+    /**
+     * @param LifecycleEventArgs<\Doctrine\ORM\EntityManagerInterface> $args
+     */
     public function preRemove(LifecycleEventArgs $args): void
     {
         if (!$this->isEnabled) {
@@ -52,6 +65,9 @@ class AutoUpdateListener
         }
     }
 
+    /**
+     * @param LifecycleEventArgs<\Doctrine\ORM\EntityManagerInterface> $args
+     */
     private function handleUpdate(LifecycleEventArgs $args): void
     {
         if (!$this->isEnabled) {

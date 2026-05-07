@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }} / Symfony ${{ matrix.symfony }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.5']
+        symfony: ['7.4', '8.0']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Pin Symfony version
+        run: |
+          composer require --no-update \
+            "symfony/framework-bundle:^${{ matrix.symfony }}" \
+            "symfony/config:^${{ matrix.symfony }}" \
+            "symfony/dependency-injection:^${{ matrix.symfony }}" \
+            "symfony/console:^${{ matrix.symfony }}" \
+            "symfony/http-client:^${{ matrix.symfony }}" \
+            "symfony/phpunit-bridge:^${{ matrix.symfony }}"
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse

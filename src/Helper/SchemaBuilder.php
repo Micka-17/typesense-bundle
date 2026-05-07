@@ -4,6 +4,7 @@ namespace Micka17\TypesenseBundle\Helper;
 
 class SchemaBuilder
 {
+    /** @var array<string, mixed> */
     private array $schema = [];
 
     public function __construct(string $name)
@@ -33,6 +34,9 @@ class SchemaBuilder
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function build(): array
     {
         return $this->schema;

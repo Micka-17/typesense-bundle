@@ -44,6 +44,13 @@ class TypesenseExtension extends Extension
         $container->setParameter('typesense.error_tracking.node_error_fields', $config['error_tracking']['node_error_fields']);
 
         $container->setParameter('typesense.synonyms', $config['synonyms']);
+        $container->setParameter('typesense.synonym_sets', $config['synonym_sets']);
+        $container->setParameter('typesense.curation_sets', $config['curation_sets']);
+        $container->setParameter('typesense.presets', $config['presets']);
+        $container->setParameter('typesense.stemming_dictionaries', $config['stemming_dictionaries']);
+        $container->setParameter('typesense.analytics_rules', $config['analytics_rules']);
+        $container->setParameter('typesense.nl_search_models', $config['nl_search_models']);
+        $container->setParameter('typesense.conversation_models', $config['conversation_models']);
 
         $this->addTwigNamespace($container);
     }

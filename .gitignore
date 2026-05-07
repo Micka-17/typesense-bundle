@@ -15,6 +15,7 @@
 # Build
 /build/
 /dist/
+/public/build/
 
 # Environment
 .env.local
@@ -41,7 +42,8 @@ Thumbs.db
 
 # Coverage
 coverage.xml
-html-coverage/
+/coverage/
+/html-coverage/
 
 # Temporary files
 *.tmp
@@ -61,3 +63,8 @@ config/parameters_test.yml
 composer.phar
 
 analyse_projet.txt
+to-do.md
+
+# PHPStan cache
+.phpstan/
+.phpstan.result.cache

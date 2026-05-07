@@ -3,12 +3,15 @@
 namespace Micka17\TypesenseBundle\Tests\Service;
 
 use Micka17\TypesenseBundle\Service\TypesenseClient;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Typesense\Client;
 use Typesense\Collection;
 use Typesense\Collections;
 use Typesense\Exceptions\ObjectNotFound;
+use Typesense\MultiSearch;
 
+#[AllowMockObjectsWithoutExpectations]
 class TypesenseClientTest extends TestCase
 {
     private \PHPUnit\Framework\MockObject\MockObject|Client $mockClient;
@@ -50,6 +53,7 @@ class TypesenseClientTest extends TestCase
             ->willReturn(['success' => true]);
 
         $this->mockCollections
+            ->expects($this->once())
             ->method('offsetGet')
             ->with($collectionName)
             ->willReturn($collectionMock);
@@ -68,6 +72,7 @@ class TypesenseClientTest extends TestCase
             ->willThrowException(new ObjectNotFound());
 
         $this->mockCollections
+            ->expects($this->once())
             ->method('offsetGet')
             ->with($collectionName)
             ->willReturn($collectionMock);
@@ -92,6 +97,7 @@ class TypesenseClientTest extends TestCase
         $collectionMock->documents = $mockDocuments;
 
         $this->mockCollections
+            ->expects($this->once())
             ->method('offsetGet')
             ->with($collectionName)
             ->willReturn($collectionMock);
@@ -111,7 +117,7 @@ class TypesenseClientTest extends TestCase
             ->willReturn(['id' => $documentId]);
 
         $mockDocuments = $this->createMock(\Typesense\Documents::class);
-        $mockDocuments->method('offsetGet')
+        $mockDocuments->expects($this->once())->method('offsetGet')
             ->with($documentId)
             ->willReturn($mockDocument);
 
@@ -119,6 +125,7 @@ class TypesenseClientTest extends TestCase
         $collectionMock->documents = $mockDocuments;
 
         $this->mockCollections
+            ->expects($this->once())
             ->method('offsetGet')
             ->with($collectionName)
             ->willReturn($collectionMock);
@@ -137,7 +144,7 @@ class TypesenseClientTest extends TestCase
             ->willThrowException(new ObjectNotFound());
 
         $mockDocuments = $this->createMock(\Typesense\Documents::class);
-        $mockDocuments->method('offsetGet')
+        $mockDocuments->expects($this->once())->method('offsetGet')
             ->with($documentId)
             ->willReturn($mockDocument);
 
@@ -145,6 +152,7 @@ class TypesenseClientTest extends TestCase
         $collectionMock->documents = $mockDocuments;
 
         $this->mockCollections
+            ->expects($this->once())
             ->method('offsetGet')
             ->with($collectionName)
             ->willReturn($collectionMock);
@@ -168,12 +176,34 @@ class TypesenseClientTest extends TestCase
         $collectionMock->documents = $mockDocuments;
 
         $this->mockCollections
+            ->expects($this->once())
             ->method('offsetGet')
             ->with($collectionName)
             ->willReturn($collectionMock);
 
         $result = $this->typesenseClient->search($collectionName, $searchParams);
         $this->assertEquals($expectedResult, $result);
+    }
+
+    public function testMultiSearch(): void
+    {
+        $searchRequests = ['searches' => [['collection' => 'books', 'q' => 'PHP']]];
+        $expectedResult = ['results' => [['hits' => []]]];
+
+        $mockMultiSearch = $this->createMock(MultiSearch::class);
+        $mockMultiSearch->expects($this->once())
+            ->method('perform')
+            ->with($searchRequests, ['union' => true])
+            ->willReturn($expectedResult);
+
+        $this->mockClient->multiSearch = $mockMultiSearch;
+
+        $this->assertSame($expectedResult, $this->typesenseClient->multiSearch($searchRequests, ['union' => true]));
+    }
+
+    public function testGetOperationsReturnsNativeClient(): void
+    {
+        $this->assertSame($this->mockClient, $this->typesenseClient->getClient());
     }
 
     public function testCreateOrUpdateDocument(): void
@@ -192,6 +222,7 @@ class TypesenseClientTest extends TestCase
         $collectionMock->documents = $mockDocuments;
 
         $this->mockCollections
+            ->expects($this->once())
             ->method('offsetGet')
             ->with($collectionName)
             ->willReturn($collectionMock);
@@ -212,7 +243,7 @@ class TypesenseClientTest extends TestCase
             ->willReturn($expectedResult);
 
         $mockDocuments = $this->createMock(\Typesense\Documents::class);
-        $mockDocuments->method('offsetGet')
+        $mockDocuments->expects($this->once())->method('offsetGet')
             ->with($documentId)
             ->willReturn($mockDocument);
 
@@ -220,6 +251,7 @@ class TypesenseClientTest extends TestCase
         $collectionMock->documents = $mockDocuments;
 
         $this->mockCollections
+            ->expects($this->once())
             ->method('offsetGet')
             ->with($collectionName)
             ->willReturn($collectionMock);
@@ -236,7 +268,6 @@ class TestableTypesenseClient extends TypesenseClient
     {
         $refClass = new \ReflectionClass(TypesenseClient::class);
         $property = $refClass->getProperty('client');
-        $property->setAccessible(true);
         $property->setValue($this, $mockClient);
     }
 }

@@ -32,7 +32,7 @@ class ConfigurationTest extends TestCase
         $this->assertSame('my-secret', $result['api_key']);
         $this->assertTrue($result['auto_update']);
         $this->assertFalse($result['cluster']['enabled']);
-        $this->assertSame('master_only', $result['cluster']['read_preference']);
+        $this->assertSame('leader_only', $result['cluster']['read_preference']);
     }
 
     public function testInvalidLogLevelThrowsException(): void
@@ -75,5 +75,81 @@ class ConfigurationTest extends TestCase
                 'nodes' => [['host' => 'localhost']]
             ]
         ]);
+    }
+
+    public function testTypesenseV30ResourcesConfiguration(): void
+    {
+        $result = $this->processConfiguration([
+            'api_key' => 'my-secret',
+            'cluster' => [
+                'nodes' => [['host' => 'localhost']]
+            ],
+            'synonym_sets' => [
+                'products' => [
+                    'items' => [
+                        'size' => [
+                            'synonyms' => ['large', 'big', 'huge'],
+                        ],
+                        'color' => [
+                            'root' => 'primary_color',
+                            'synonyms' => ['red', 'blue', 'green'],
+                        ],
+                    ],
+                ],
+            ],
+            'curation_sets' => [
+                'products' => [
+                    'items' => [
+                        'promote-iphone' => [
+                            'rule' => ['query' => 'iphone'],
+                            'includes' => [['id' => 'iphone-15', 'position' => 1]],
+                        ],
+                    ],
+                ],
+            ],
+            'presets' => [
+                'product_search' => [
+                    'value' => [
+                        'searches' => [
+                            ['collection' => 'products', 'q' => '*', 'query_by' => 'name'],
+                        ],
+                    ],
+                ],
+            ],
+            'stemming_dictionaries' => [
+                'fr' => [
+                    'words' => [
+                        ['word' => 'chaussures', 'root' => 'chaussure'],
+                    ],
+                ],
+            ],
+            'analytics_rules' => [
+                'popular_products' => [
+                    'type' => 'popular_queries',
+                    'params' => ['source' => ['collections' => ['products']]],
+                ],
+            ],
+            'nl_search_models' => [
+                'products-nl' => [
+                    'model_name' => 'openai/gpt-4o-mini',
+                    'api_key' => 'secret',
+                ],
+            ],
+            'conversation_models' => [
+                'products-chat' => [
+                    'model_name' => 'openai/gpt-4o-mini',
+                    'api_key' => 'secret',
+                ],
+            ],
+        ]);
+
+        $this->assertSame(['large', 'big', 'huge'], $result['synonym_sets']['products']['items']['size']['synonyms']);
+        $this->assertSame('primary_color', $result['synonym_sets']['products']['items']['color']['root']);
+        $this->assertSame('iphone', $result['curation_sets']['products']['items']['promote-iphone']['rule']['query']);
+        $this->assertSame('products', $result['presets']['product_search']['value']['searches'][0]['collection']);
+        $this->assertSame('chaussure', $result['stemming_dictionaries']['fr']['words'][0]['root']);
+        $this->assertSame('popular_queries', $result['analytics_rules']['popular_products']['type']);
+        $this->assertSame('openai/gpt-4o-mini', $result['nl_search_models']['products-nl']['model_name']);
+        $this->assertSame('openai/gpt-4o-mini', $result['conversation_models']['products-chat']['model_name']);
     }
 }

@@ -9,8 +9,12 @@ use Typesense\Exceptions\TypesenseClientError;
 class TypesenseErrorTracker
 {
     private const DEFAULT_ERROR_FIELDS = ['host', 'port', 'protocol', 'path', 'error_message', 'error_code', 'timestamp'];
+    /** @var array<string> */
     private array $filteredNodeErrorFields;
 
+    /**
+     * @param array<string> $nodeErrorFields
+     */
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly KernelInterface $kernel,
@@ -45,6 +49,7 @@ class TypesenseErrorTracker
         return "Noeud problématique : " . implode(':', $details);
     }
 
+    /** @param array<string, mixed> $context */
     public function trackError(string $message, array $context = [], ?\Throwable $exception = null): void
     {
         if (!$this->enabled) {
@@ -77,6 +82,7 @@ class TypesenseErrorTracker
         $this->logger->log($this->logLevel, $message, $logContext);
     }
 
+    /** @return array<string, mixed>|null */
     private function extractNodeInfo(\Throwable $exception): ?array
     {
         if ($this->trackNodeErrors && $exception instanceof TypesenseClientError && method_exists($exception, 'getNode')) {

@@ -1,0 +1,183 @@
+{% extends '@Micka17Typesense/base.html.twig' %}
+
+{% block title %}{{ label }} — Typesense Admin{% endblock %}
+
+{% block body %}
+<div class="page-header d-flex align-items-center justify-content-between">
+    <h1><i class="bi {{ icon }} me-2"></i>{{ label }}</h1>
+    <span class="badge bg-secondary rounded-pill fs-6">{{ items|length }}</span>
+</div>
+
+<div class="p-4">
+    {% if items|length == 0 %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-1"></i>
+            Aucune ressource de type <strong>{{ label }}</strong> trouvée.
+            Utilisez la commande <code>micka17:typesense:sync</code> pour synchroniser la configuration.
+        </div>
+    {% else %}
+
+    {# --- Collections: affichage enrichi --- #}
+    {% if resource == 'collections' %}
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom</th>
+                            <th class="text-end">Documents</th>
+                            <th>Champs</th>
+                            <th class="text-end">Créée le</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td><code class="text-primary fw-medium">{{ item.name }}</code></td>
+                            <td class="text-end"><span class="badge bg-primary rounded-pill">{{ item.num_documents|number_format }}</span></td>
+                            <td>
+                                {% for field in item.fields|slice(0, 5) %}
+                                    <span class="badge bg-light text-dark border me-1 small">{{ field.name }}<span class="text-muted ms-1">{{ field.type }}</span></span>
+                                {% endfor %}
+                                {% if item.fields|length > 5 %}
+                                    <span class="text-muted small">+{{ item.fields|length - 5 }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end text-muted small">
+                                {% if item.created_at is defined %}{{ (item.created_at)|date('d/m/Y') }}{% else %}—{% endif %}
+                            </td>
+                            <td class="text-end">
+                                <form action="{{ path('micka17_typesense_admin_resource_delete', {resource: resource, id: item[idKey]}) }}"
+                                      method="post" class="d-inline"
+                                      onsubmit="return confirm('Supprimer la collection &quot;{{ item[idKey]|e('js') }}&quot; ? Cette action est irréversible.')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ resource ~ '_' ~ item[idKey]) }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    {# --- Presets --- #}
+    {% elseif resource == 'presets' %}
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr><th>Nom</th><th>Paramètres</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td><code class="text-primary">{{ item.name }}</code></td>
+                            <td>
+                                {% set params = item.value ?? {} %}
+                                {% for k, v in params|slice(0, 4) %}
+                                    <span class="badge bg-light text-dark border me-1 small">{{ k }}: {{ v }}</span>
+                                {% endfor %}
+                                {% if params|length > 4 %}<span class="text-muted small">+{{ params|length - 4 }}</span>{% endif %}
+                            </td>
+                            <td class="text-end">
+                                <form action="{{ path('micka17_typesense_admin_resource_delete', {resource: resource, id: item[idKey]}) }}"
+                                      method="post" class="d-inline"
+                                      onsubmit="return confirm('Supprimer le preset &quot;{{ item[idKey]|e('js') }}&quot; ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ resource ~ '_' ~ item[idKey]) }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    {# --- Synonym Sets --- #}
+    {% elseif resource == 'synonym-sets' %}
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr><th>ID</th><th>Synonymes</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td><code class="text-primary">{{ item.id }}</code></td>
+                            <td>
+                                {% for s in item.synonyms|slice(0, 6) %}
+                                    <span class="badge bg-info text-dark me-1 small">{{ s }}</span>
+                                {% endfor %}
+                                {% if item.synonyms|length > 6 %}<span class="text-muted small">+{{ item.synonyms|length - 6 }}</span>{% endif %}
+                                {% if item.root is defined and item.root %}
+                                    <span class="badge bg-secondary ms-2 small">racine: {{ item.root }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <form action="{{ path('micka17_typesense_admin_resource_delete', {resource: resource, id: item[idKey]}) }}"
+                                      method="post" class="d-inline"
+                                      onsubmit="return confirm('Supprimer &quot;{{ item[idKey]|e('js') }}&quot; ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ resource ~ '_' ~ item[idKey]) }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    {# --- Generic fallback (Curation Sets, Stemming, Analytics, NL Models, Conversations) --- #}
+    {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            {% for col in columns %}
+                                <th>{{ col }}</th>
+                            {% endfor %}
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in items %}
+                        <tr>
+                            {% for colLabel, colKey in columns %}
+                                <td>
+                                    {% if loop.first %}
+                                        <code class="text-primary">{{ attribute(item, colKey) ?? '—' }}</code>
+                                    {% elseif colKey starts with '_' %}
+                                        {# computed columns — skip, handled in enriched views #}
+                                        <span class="text-muted">—</span>
+                                    {% else %}
+                                        {{ attribute(item, colKey) is defined ? attribute(item, colKey) : '—' }}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                            <td class="text-end">
+                                <form action="{{ path('micka17_typesense_admin_resource_delete', {resource: resource, id: item[idKey]}) }}"
+                                      method="post" class="d-inline"
+                                      onsubmit="return confirm('Supprimer &quot;{{ item[idKey]|e('js') }}&quot; ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_' ~ resource ~ '_' ~ item[idKey]) }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+
+    {% endif %}{# end if items #}
+</div>
+{% endblock %}

@@ -19,6 +19,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 )]
 class TypesenseSynonymsCommand extends Command
 {
+    /** @var string */
     protected static $defaultName = 'micka17:typesense:synonyms';
 
     public function __construct(private readonly TypesenseClient $client)
@@ -83,9 +84,9 @@ class TypesenseSynonymsCommand extends Command
         }
 
         if ($collectionName) {
-            $this->client->getOperations()->collections[$collectionName]->synonyms->upsert($synonymId, $data);
+            $this->client->getClient()->collections[$collectionName]->synonyms->upsert($synonymId, $data);
         } else {
-            $this->client->getOperations()->synonyms->upsert($synonymId, $data);
+            $this->client->getClient()->synonymSets->upsert($synonymId, $data);
         }
 
         $io->success(sprintf('Synonym "%s" has been upserted.', $synonymId));
@@ -94,9 +95,9 @@ class TypesenseSynonymsCommand extends Command
     private function listSynonyms(SymfonyStyle $io, ?string $collectionName): void
     {
         if ($collectionName) {
-            $response = $this->client->getOperations()->collections[$collectionName]->synonyms->retrieve();
+            $response = $this->client->getClient()->collections[$collectionName]->synonyms->retrieve();
         } else {
-            $response = $this->client->getOperations()->synonyms->retrieve();
+            $response = $this->client->getClient()->synonymSets->retrieve();
         }
 
         $io->table(['ID', 'Synonyms', 'Root'], array_map(fn ($s) => [$s['id'], implode(', ', $s['synonyms']), $s['root'] ?? ''], $response['synonyms']));
@@ -112,9 +113,9 @@ class TypesenseSynonymsCommand extends Command
         }
 
         if ($collectionName) {
-            $this->client->getOperations()->collections[$collectionName]->synonyms[$synonymId]->delete();
+            $this->client->getClient()->collections[$collectionName]->synonyms[$synonymId]->delete();
         } else {
-            $this->client->getOperations()->synonyms[$synonymId]->delete();
+            $this->client->getClient()->synonymSets[$synonymId]->delete();
         }
 
         $io->success(sprintf('Synonym "%s" has been deleted.', $synonymId));

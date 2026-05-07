@@ -63,6 +63,7 @@ class TypesenseManager
         }
     }
 
+    /** @param class-string $entityClass */
     public function reindexEntityCollection(string $entityClass, ?SymfonyStyle $io = null): int
     {
         $schema = $this->schemaGenerator->generate($entityClass);
@@ -70,7 +71,9 @@ class TypesenseManager
 
         $io?->section("Indexation de l'entité '$entityClass' dans la collection '$collectionName'");
 
-        $documents = $this->em->getRepository($entityClass)->findAll();
+        /** @var \Doctrine\ORM\EntityRepository<object> $repo */
+        $repo = $this->em->getRepository($entityClass);
+        $documents = $repo->findAll();
         $totalCount = count($documents);
 
         if ($totalCount === 0) {
@@ -168,11 +171,16 @@ class TypesenseManager
         throw $e;
     }
 
+    /**
+     * @param array<string, mixed> $schema
+     * @return array<string, mixed>
+     */
     public function createCollection(array $schema): array
     {
         return $this->client->createCollection($schema);
     }
 
+    /** @return array<string, mixed> */
     public function deleteCollection(string $name): array
     {
         return $this->client->deleteCollection($name);
@@ -183,11 +191,16 @@ class TypesenseManager
         return $this->client->collectionExists($name);
     }
 
+    /**
+     * @param array<string, mixed> $document
+     * @return array<string, mixed>
+     */
     public function createOrUpdateDocument(string $collection, array $document): array
     {
         return $this->client->createOrUpdateDocument($collection, $document);
     }
 
+    /** @return array<string, mixed> */
     public function deleteDocument(string $collection, string $id): array
     {
         return $this->client->deleteDocument($collection, $id);

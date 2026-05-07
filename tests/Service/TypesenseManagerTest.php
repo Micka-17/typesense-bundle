@@ -9,11 +9,14 @@ use Micka17\TypesenseBundle\Service\TypesenseClient;
 use Micka17\TypesenseBundle\Service\TypesenseErrorTracker;
 use Micka17\TypesenseBundle\Service\TypesenseManager;
 use Micka17\TypesenseBundle\Service\TypesenseNormalizer;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Typesense\Exceptions\ObjectNotFound;
 
+#[AllowMockObjectsWithoutExpectations]
 class TypesenseManagerTest extends TestCase
 {
     private MockObject|TypesenseClient $clientMock;
@@ -127,10 +130,10 @@ class TypesenseManagerTest extends TestCase
 
         $repositoryMock = $this->createMock(EntityRepository::class);
         $repositoryMock->method('findAll')->willReturn($entities);
-        $this->emMock->method('getRepository')->with('stdClass')->willReturn($repositoryMock);
+        $this->emMock->expects($this->once())->method('getRepository')->with('stdClass')->willReturn($repositoryMock);
 
-        $this->normalizerMock->method('normalize')->with($entity)->willReturn(['document' => ['id' => 1, 'field' => 'value']]);
-        $this->clientMock->method('importDocuments')
+        $this->normalizerMock->expects($this->once())->method('normalize')->with($entity)->willReturn(['document' => ['id' => 1, 'field' => 'value']]);
+        $this->clientMock->expects($this->once())->method('importDocuments')
             ->with('my_collection', [['id' => 1, 'field' => 'value']])
             ->willReturn([['success' => true]]);
 
@@ -223,9 +226,7 @@ class TypesenseManagerTest extends TestCase
         $this->assertSame(0, $count);
     }
 
-    /**
-     * @dataProvider provideProxyMethods
-     */
+    #[DataProvider('provideProxyMethods')]
     public function testProxyMethods(string $methodName, array $args): void
     {
         $this->clientMock->expects($this->once())

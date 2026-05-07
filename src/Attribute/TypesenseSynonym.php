@@ -9,6 +9,9 @@ use Attribute;
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 class TypesenseSynonym
 {
+    /**
+     * @param array<int, string> $synonyms
+     */
     public function __construct(
         public string $id,
         public array $synonyms,

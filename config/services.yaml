@@ -19,6 +19,23 @@ services:
 
   Micka17\TypesenseBundle\Service\SchemaGenerator: ~
 
+  Micka17\TypesenseBundle\Service\SynonymSetManager: ~
+
+  Micka17\TypesenseBundle\Service\CurationSetManager: ~
+
+  Micka17\TypesenseBundle\Service\PresetManager: ~
+
+  Micka17\TypesenseBundle\Service\StemmingManager: ~
+
+  Micka17\TypesenseBundle\Service\AnalyticsManager:
+    lazy: true
+
+  Micka17\TypesenseBundle\Service\NaturalLanguageSearchManager:
+    lazy: true
+
+  Micka17\TypesenseBundle\Service\ConversationManager:
+    lazy: true
+
   Micka17\TypesenseBundle\Command\TypesenseCreateCollectionCommand:
     public: true
 
@@ -30,6 +47,108 @@ services:
     arguments:
       $indexableEntities: '%typesense.indexable_entities%'
       $globalSynonyms: '%typesense.synonyms%'
+
+  Micka17\TypesenseBundle\Command\TypesenseSynonymSetsApplyCommand:
+    public: true
+    arguments:
+      $synonymSets: '%typesense.synonym_sets%'
+
+  Micka17\TypesenseBundle\Command\TypesenseCurationSetsApplyCommand:
+    public: true
+    arguments:
+      $curationSets: '%typesense.curation_sets%'
+
+  Micka17\TypesenseBundle\Command\TypesensePresetsApplyCommand:
+    public: true
+    arguments:
+      $presets: '%typesense.presets%'
+
+  Micka17\TypesenseBundle\Command\TypesenseStemmingDictionariesApplyCommand:
+    public: true
+    arguments:
+      $dictionaries: '%typesense.stemming_dictionaries%'
+
+  Micka17\TypesenseBundle\Command\TypesenseAnalyticsRulesApplyCommand:
+    public: true
+    arguments:
+      $rules: '%typesense.analytics_rules%'
+
+  Micka17\TypesenseBundle\Command\TypesenseNlSearchModelsApplyCommand:
+    public: true
+    arguments:
+      $models: '%typesense.nl_search_models%'
+
+  Micka17\TypesenseBundle\Command\TypesenseConversationModelsApplyCommand:
+    public: true
+    arguments:
+      $models: '%typesense.conversation_models%'
+
+  Micka17\TypesenseBundle\Command\TypesenseSyncCommand:
+    public: true
+    arguments:
+      $synonymSets: '%typesense.synonym_sets%'
+      $curationSets: '%typesense.curation_sets%'
+      $presets: '%typesense.presets%'
+      $stemmingDictionaries: '%typesense.stemming_dictionaries%'
+      $analyticsRules: '%typesense.analytics_rules%'
+      $nlSearchModels: '%typesense.nl_search_models%'
+      $conversationModels: '%typesense.conversation_models%'
+
+  Micka17\TypesenseBundle\Command\TypesenseAnalyticsRulesListCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseAnalyticsRulesDeleteCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseConversationsListCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseConversationsDeleteCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseNlSearchModelsListCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseNlSearchModelsDeleteCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseStemmingListCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseStemmingDeleteCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseStemmingImportCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesensePresetsListCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesensePresetsDeleteCommand:
+    public: true
+
+  Micka17\TypesenseBundle\Command\TypesenseMigrateConfigCommand:
+    public: true
+    arguments:
+      $legacySynonyms: '%typesense.synonyms%'
+      $synonymSets: '%typesense.synonym_sets%'
+      $curationSets: '%typesense.curation_sets%'
+      $presets: '%typesense.presets%'
+      $stemmingDictionaries: '%typesense.stemming_dictionaries%'
+      $analyticsRules: '%typesense.analytics_rules%'
+      $nlSearchModels: '%typesense.nl_search_models%'
+      $conversationModels: '%typesense.conversation_models%'
+
+  Micka17\TypesenseBundle\Command\TypesenseDoctorCommand:
+    public: true
+    arguments:
+      $synonymSets: '%typesense.synonym_sets%'
+      $curationSets: '%typesense.curation_sets%'
+      $presets: '%typesense.presets%'
+      $stemmingDictionaries: '%typesense.stemming_dictionaries%'
+      $analyticsRules: '%typesense.analytics_rules%'
+      $nlSearchModels: '%typesense.nl_search_models%'
+      $conversationModels: '%typesense.conversation_models%'
 
   Micka17\TypesenseBundle\Service\TypesenseErrorTracker:
     arguments:
